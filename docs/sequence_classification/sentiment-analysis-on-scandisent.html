@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 2 Sentiment Analysis on ScandiSent | Document Classification with Transformers</title>
+  <meta name="description" content="This is a guide describing how to use KBLab’s transformer language models for document classification." />
+  <meta name="generator" content="bookdown 0.22 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 2 Sentiment Analysis on ScandiSent | Document Classification with Transformers" />
+  <meta property="og:type" content="book" />
+  <meta property="og:url" content="https://github.com/kb-labb/guides/sentiment_analysis/" />
+  <meta property="og:image" content="https://github.com/kb-labb/guides/sentiment_analysis//../images/kb_logo_text_black.png" />
+  <meta property="og:description" content="This is a guide describing how to use KBLab’s transformer language models for document classification." />
+  <meta name="github-repo" content="kb-labb/guides" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 2 Sentiment Analysis on ScandiSent | Document Classification with Transformers" />
+  
+  <meta name="twitter:description" content="This is a guide describing how to use KBLab’s transformer language models for document classification." />
+  <meta name="twitter:image" content="https://github.com/kb-labb/guides/sentiment_analysis//../images/kb_logo_text_black.png" />
+
+<meta name="author" content="Faton Rekathati, KBLab" />
+
+
+<meta name="date" content="2022-03-30" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="intro.html"/>
+<link rel="next" href="methods.html"/>
+<script src="libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.0.1/anchor-sections.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.0.1/anchor-sections.js"></script>
+<script src="libs/core-js-2.5.3/shim.min.js"></script>
+<script src="libs/react-17.0.0/react.min.js"></script>
+<script src="libs/react-17.0.0/react-dom.min.js"></script>
+<script src="libs/reactwidget-1.0.0/react-tools.js"></script>
+<script src="libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+<script src="libs/reactable-binding-0.2.3.9000/reactable.js"></script>
+<link href="libs/tippyjs-3.2.0/themes/google.css" rel="stylesheet" />
+<link href="libs/tippyjs-3.2.0/themes/light-border.css" rel="stylesheet" />
+<link href="libs/tippyjs-3.2.0/themes/light.css" rel="stylesheet" />
+<link href="libs/tippyjs-3.2.0/themes/translucent.css" rel="stylesheet" />
+<script src="libs/tippyjs-3.2.0/tippy.all.min.js"></script>
+<script src="libs/tippy-binding-0.1.0/tippy.js"></script>
+<script>
+/* ========================================================================
+ * Bootstrap: transition.js v3.3.7
+ * http://getbootstrap.com/javascript/#transitions
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+
++function ($) {
+  'use strict';
+
+  // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
+  // ============================================================
+
+  function transitionEnd() {
+    var el = document.createElement('bootstrap')
+
+    var transEndEventNames = {
+      WebkitTransition : 'webkitTransitionEnd',
+      MozTransition    : 'transitionend',
+      OTransition      : 'oTransitionEnd otransitionend',
+      transition       : 'transitionend'
+    }
+
+    for (var name in transEndEventNames) {
+      if (el.style[name] !== undefined) {
+        return { end: transEndEventNames[name] }
+      }
+    }
+
+    return false // explicit for ie8 (  ._.)
+  }
+
+  // http://blog.alexmaccaw.com/css-transitions
+  $.fn.emulateTransitionEnd = function (duration) {
+    var called = false
+    var $el = this
+    $(this).one('bsTransitionEnd', function () { called = true })
+    var callback = function () { if (!called) $($el).trigger($.support.transition.end) }
+    setTimeout(callback, duration)
+    return this
+  }
+
+  $(function () {
+    $.support.transition = transitionEnd()
+
+    if (!$.support.transition) return
+
+    $.event.special.bsTransitionEnd = {
+      bindType: $.support.transition.end,
+      delegateType: $.support.transition.end,
+      handle: function (e) {
+        if ($(e.target).is(this)) return e.handleObj.handler.apply(this, arguments)
+      }
+    }
+  })
+
+}(jQuery);
+</script>
+<script>
+/* ========================================================================
+ * Bootstrap: collapse.js v3.3.7
+ * http://getbootstrap.com/javascript/#collapse
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+/* jshint latedef: false */
+
++function ($) {
+  'use strict';
+
+  // COLLAPSE PUBLIC CLASS DEFINITION
+  // ================================
+
+  var Collapse = function (element, options) {
+    this.$element      = $(element)
+    this.options       = $.extend({}, Collapse.DEFAULTS, options)
+    this.$trigger      = $('[data-toggle="collapse"][href="#' + element.id + '"],' +
+                           '[data-toggle="collapse"][data-target="#' + element.id + '"]')
+    this.transitioning = null
+
+    if (this.options.parent) {
+      this.$parent = this.getParent()
+    } else {
+      this.addAriaAndCollapsedClass(this.$element, this.$trigger)
+    }
+
+    if (this.options.toggle) this.toggle()
+  }
+
+  Collapse.VERSION  = '3.3.7'
+
+  Collapse.TRANSITION_DURATION = 200
+
+  Collapse.DEFAULTS = {
+    toggle: true
+  }
+
+  Collapse.prototype.dimension = function () {
+    var hasWidth = this.$element.hasClass('width')
+    return hasWidth ? 'width' : 'height'
+  }
+
+  Collapse.prototype.show = function () {
+    if (this.transitioning || this.$element.hasClass('in')) return
+
+    var activesData
+    var actives = this.$parent && this.$parent.children('.panel').children('.in, .collapsing')
+
+    if (actives && actives.length) {
+      activesData = actives.data('bs.collapse')
+      if (activesData && activesData.transitioning) return
+    }
+
+    var startEvent = $.Event('show.bs.collapse')
+    this.$element.trigger(startEvent)
+    if (startEvent.isDefaultPrevented()) return
+
+    if (actives && actives.length) {
+      Plugin.call(actives, 'hide')
+      activesData || actives.data('bs.collapse', null)
+    }
+
+    var dimension = this.dimension()
+
+    this.$element
+      .removeClass('collapse')
+      .addClass('collapsing')[dimension](0)
+      .attr('aria-expanded', true)
+
+    this.$trigger
+      .removeClass('collapsed')
+      .attr('aria-expanded', true)
+
+    this.transitioning = 1
+
+    var complete = function () {
+      this.$element
+        .removeClass('collapsing')
+        .addClass('collapse in')[dimension]('')
+      this.transitioning = 0
+      this.$element
+        .trigger('shown.bs.collapse')
+    }
+
+    if (!$.support.transition) return complete.call(this)
+
+    var scrollSize = $.camelCase(['scroll', dimension].join('-'))
+
+    this.$element
+      .one('bsTransitionEnd', $.proxy(complete, this))
+      .emulateTransitionEnd(Collapse.TRANSITION_DURATION)[dimension](this.$element[0][scrollSize])
+  }
+
+  Collapse.prototype.hide = function () {
+    if (this.transitioning || !this.$element.hasClass('in')) return
+
+    var startEvent = $.Event('hide.bs.collapse')
+    this.$element.trigger(startEvent)
+    if (startEvent.isDefaultPrevented()) return
+
+    var dimension = this.dimension()
+
+    this.$element[dimension](this.$element[dimension]())[0].offsetHeight
+
+    this.$element
+      .addClass('collapsing')
+      .removeClass('collapse in')
+      .attr('aria-expanded', false)
+
+    this.$trigger
+      .addClass('collapsed')
+      .attr('aria-expanded', false)
+
+    this.transitioning = 1
+
+    var complete = function () {
+      this.transitioning = 0
+      this.$element
+        .removeClass('collapsing')
+        .addClass('collapse')
+        .trigger('hidden.bs.collapse')
+    }
+
+    if (!$.support.transition) return complete.call(this)
+
+    this.$element
+      [dimension](0)
+      .one('bsTransitionEnd', $.proxy(complete, this))
+      .emulateTransitionEnd(Collapse.TRANSITION_DURATION)
+  }
+
+  Collapse.prototype.toggle = function () {
+    this[this.$element.hasClass('in') ? 'hide' : 'show']()
+  }
+
+  Collapse.prototype.getParent = function () {
+    return $(this.options.parent)
+      .find('[data-toggle="collapse"][data-parent="' + this.options.parent + '"]')
+      .each($.proxy(function (i, element) {
+        var $element = $(element)
+        this.addAriaAndCollapsedClass(getTargetFromTrigger($element), $element)
+      }, this))
+      .end()
+  }
+
+  Collapse.prototype.addAriaAndCollapsedClass = function ($element, $trigger) {
+    var isOpen = $element.hasClass('in')
+
+    $element.attr('aria-expanded', isOpen)
+    $trigger
+      .toggleClass('collapsed', !isOpen)
+      .attr('aria-expanded', isOpen)
+  }
+
+  function getTargetFromTrigger($trigger) {
+    var href
+    var target = $trigger.attr('data-target')
+      || (href = $trigger.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '') // strip for ie7
+
+    return $(target)
+  }
+
+
+  // COLLAPSE PLUGIN DEFINITION
+  // ==========================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.collapse')
+      var options = $.extend({}, Collapse.DEFAULTS, $this.data(), typeof option == 'object' && option)
+
+      if (!data && options.toggle && /show|hide/.test(option)) options.toggle = false
+      if (!data) $this.data('bs.collapse', (data = new Collapse(this, options)))
+      if (typeof option == 'string') data[option]()
+    })
+  }
+
+  var old = $.fn.collapse
+
+  $.fn.collapse             = Plugin
+  $.fn.collapse.Constructor = Collapse
+
+
+  // COLLAPSE NO CONFLICT
+  // ====================
+
+  $.fn.collapse.noConflict = function () {
+    $.fn.collapse = old
+    return this
+  }
+
+
+  // COLLAPSE DATA-API
+  // =================
+
+  $(document).on('click.bs.collapse.data-api', '[data-toggle="collapse"]', function (e) {
+    var $this   = $(this)
+
+    if (!$this.attr('data-target')) e.preventDefault()
+
+    var $target = getTargetFromTrigger($this)
+    var data    = $target.data('bs.collapse')
+    var option  = data ? 'toggle' : $this.data()
+
+    Plugin.call($target, option)
+  })
+
+}(jQuery);
+</script>
+<script>
+window.initializeCodeFolding = function(show) {
+
+  // handlers for show-all and hide all
+  $("#rmd-show-all-code").click(function() {
+    // close the dropdown menu when an option is clicked
+    $("#allCodeButton").dropdown("toggle");
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('show');
+    });
+  });
+  $("#rmd-hide-all-code").click(function() {
+    // close the dropdown menu when an option is clicked
+    $("#allCodeButton").dropdown("toggle");
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('hide');
+    });
+  });
+
+  // index for unique code element ids
+  var currentIndex = 1;
+
+  // select all R code blocks
+  var rCodeBlocks = $('pre.sourceCode, pre.r, pre.python, pre.bash, pre.sql, pre.cpp, pre.stan');
+  rCodeBlocks.each(function() {
+
+    // if code block has been labeled with class `fold-show`, show the code on init!
+    var classList = $(this).attr('class').split(/\s+/);
+    for (var i = 0; i < classList.length; i++) {
+    if (classList[i] === 'fold-show') {
+        show = true;
+      }
+    }
+
+    // create a collapsable div to wrap the code in
+    var div = $('<div class="collapse r-code-collapse"></div>');
+    if (show)
+      div.addClass('in');
+    var id = 'rcode-643E0F36' + currentIndex++;
+    div.attr('id', id);
+    $(this).before(div);
+    $(this).detach().appendTo(div);
+
+    // add a show code button right above
+    var showCodeText = $('<span>' + (show ? 'Hide' : 'Code') + '</span>');
+    var showCodeButton = $('<button type="button" class="btn btn-default btn-xs code-folding-btn pull-right"></button>');
+    showCodeButton.append(showCodeText);
+    showCodeButton
+        .attr('data-toggle', 'collapse')
+        .attr('data-target', '#' + id)
+        .attr('aria-expanded', show)
+        .attr('aria-controls', id);
+
+    var buttonRow = $('<div class="row"></div>');
+    var buttonCol = $('<div class="col-md-12"></div>');
+
+    buttonCol.append(showCodeButton);
+    buttonRow.append(buttonCol);
+
+    div.before(buttonRow);
+
+    // hack: return show to false, otherwise all next codeBlocks will be shown!
+    show = false;
+
+    // update state of button on show/hide
+    div.on('hidden.bs.collapse', function () {
+      showCodeText.text('Code');
+    });
+    div.on('show.bs.collapse', function () {
+      showCodeText.text('Hide');
+    });
+  });
+
+}
+</script>
+<script>
+/* ========================================================================
+ * Bootstrap: dropdown.js v3.3.7
+ * http://getbootstrap.com/javascript/#dropdowns
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+
++function ($) {
+  'use strict';
+
+  // DROPDOWN CLASS DEFINITION
+  // =========================
+
+  var backdrop = '.dropdown-backdrop'
+  var toggle   = '[data-toggle="dropdown"]'
+  var Dropdown = function (element) {
+    $(element).on('click.bs.dropdown', this.toggle)
+  }
+
+  Dropdown.VERSION = '3.3.7'
+
+  function getParent($this) {
+    var selector = $this.attr('data-target')
+
+    if (!selector) {
+      selector = $this.attr('href')
+      selector = selector && /#[A-Za-z]/.test(selector) && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
+    }
+
+    var $parent = selector && $(selector)
+
+    return $parent && $parent.length ? $parent : $this.parent()
+  }
+
+  function clearMenus(e) {
+    if (e && e.which === 3) return
+    $(backdrop).remove()
+    $(toggle).each(function () {
+      var $this         = $(this)
+      var $parent       = getParent($this)
+      var relatedTarget = { relatedTarget: this }
+
+      if (!$parent.hasClass('open')) return
+
+      if (e && e.type == 'click' && /input|textarea/i.test(e.target.tagName) && $.contains($parent[0], e.target)) return
+
+      $parent.trigger(e = $.Event('hide.bs.dropdown', relatedTarget))
+
+      if (e.isDefaultPrevented()) return
+
+      $this.attr('aria-expanded', 'false')
+      $parent.removeClass('open').trigger($.Event('hidden.bs.dropdown', relatedTarget))
+    })
+  }
+
+  Dropdown.prototype.toggle = function (e) {
+    var $this = $(this)
+
+    if ($this.is('.disabled, :disabled')) return
+
+    var $parent  = getParent($this)
+    var isActive = $parent.hasClass('open')
+
+    clearMenus()
+
+    if (!isActive) {
+      if ('ontouchstart' in document.documentElement && !$parent.closest('.navbar-nav').length) {
+        // if mobile we use a backdrop because click events don't delegate
+        $(document.createElement('div'))
+          .addClass('dropdown-backdrop')
+          .insertAfter($(this))
+          .on('click', clearMenus)
+      }
+
+      var relatedTarget = { relatedTarget: this }
+      $parent.trigger(e = $.Event('show.bs.dropdown', relatedTarget))
+
+      if (e.isDefaultPrevented()) return
+
+      $this
+        .trigger('focus')
+        .attr('aria-expanded', 'true')
+
+      $parent
+        .toggleClass('open')
+        .trigger($.Event('shown.bs.dropdown', relatedTarget))
+    }
+
+    return false
+  }
+
+  Dropdown.prototype.keydown = function (e) {
+    if (!/(38|40|27|32)/.test(e.which) || /input|textarea/i.test(e.target.tagName)) return
+
+    var $this = $(this)
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    if ($this.is('.disabled, :disabled')) return
+
+    var $parent  = getParent($this)
+    var isActive = $parent.hasClass('open')
+
+    if (!isActive && e.which != 27 || isActive && e.which == 27) {
+      if (e.which == 27) $parent.find(toggle).trigger('focus')
+      return $this.trigger('click')
+    }
+
+    var desc = ' li:not(.disabled):visible a'
+    var $items = $parent.find('.dropdown-menu' + desc)
+
+    if (!$items.length) return
+
+    var index = $items.index(e.target)
+
+    if (e.which == 38 && index > 0)                 index--         // up
+    if (e.which == 40 && index < $items.length - 1) index++         // down
+    if (!~index)                                    index = 0
+
+    $items.eq(index).trigger('focus')
+  }
+
+
+  // DROPDOWN PLUGIN DEFINITION
+  // ==========================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this = $(this)
+      var data  = $this.data('bs.dropdown')
+
+      if (!data) $this.data('bs.dropdown', (data = new Dropdown(this)))
+      if (typeof option == 'string') data[option].call($this)
+    })
+  }
+
+  var old = $.fn.dropdown
+
+  $.fn.dropdown             = Plugin
+  $.fn.dropdown.Constructor = Dropdown
+
+
+  // DROPDOWN NO CONFLICT
+  // ====================
+
+  $.fn.dropdown.noConflict = function () {
+    $.fn.dropdown = old
+    return this
+  }
+
+
+  // APPLY TO STANDARD DROPDOWN ELEMENTS
+  // ===================================
+
+  $(document)
+    .on('click.bs.dropdown.data-api', clearMenus)
+    .on('click.bs.dropdown.data-api', '.dropdown form', function (e) { e.stopPropagation() })
+    .on('click.bs.dropdown.data-api', toggle, Dropdown.prototype.toggle)
+    .on('keydown.bs.dropdown.data-api', toggle, Dropdown.prototype.keydown)
+    .on('keydown.bs.dropdown.data-api', '.dropdown-menu', Dropdown.prototype.keydown)
+
+}(jQuery);
+</script>
+<style type="text/css">
+.code-folding-btn {
+  margin-bottom: 4px;
+}
+
+.row { display: flex; }
+.collapse { display: none; }
+.in { display:block }
+.pull-right > .dropdown-menu {
+    right: 0;
+    left: auto;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    display: none;
+    float: left;
+    min-width: 160px;
+    padding: 5px 0;
+    margin: 2px 0 0;
+    font-size: 14px;
+    text-align: left;
+    list-style: none;
+    background-color: #fff;
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 4px;
+    -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
+    box-shadow: 0 6px 12px rgba(0,0,0,.175);
+}
+
+.open > .dropdown-menu {
+    display: block;
+    color: #ffffff;
+    background-color: #ffffff;
+    background-image: none;
+    border-color: #92897e;
+}
+
+.dropdown-menu > li > a {
+  display: block;
+  padding: 3px 20px;
+  clear: both;
+  font-weight: 400;
+  line-height: 1.42857143;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+  color: #ffffff;
+  text-decoration: none;
+  background-color: #a14747;
+}
+
+.dropdown-menu > .active > a,
+.dropdown-menu > .active > a:hover,
+.dropdown-menu > .active > a:focus {
+  color: #ffffff;
+  text-decoration: none;
+  background-color: #a14747;
+  outline: 0;
+}
+.dropdown-menu > .disabled > a,
+.dropdown-menu > .disabled > a:hover,
+.dropdown-menu > .disabled > a:focus {
+  color: #aea79f;
+}
+
+.dropdown-menu > .disabled > a:hover,
+.dropdown-menu > .disabled > a:focus {
+  text-decoration: none;
+  cursor: not-allowed;
+  background-color: transparent;
+  background-image: none;
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+
+.btn {
+  display: inline-block;
+  margin-bottom: 1;
+  font-weight: normal;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -ms-touch-action: manipulation;
+      touch-action: manipulation;
+  cursor: pointer;
+  background-image: none;
+  border: 1px solid transparent;
+  padding: 4px 8px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  border-radius: 4px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn.active:focus,
+.btn.focus,
+.btn:active.focus,
+.btn.active.focus {
+  outline: 5px auto -webkit-focus-ring-color;
+  outline-offset: -2px;
+}
+.btn:hover,
+.btn:focus,
+.btn.focus {
+  color: #ffffff;
+  text-decoration: none;
+}
+.btn:active,
+.btn.active {
+  background-image: none;
+  outline: 0;
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
+.btn.disabled,
+.btn[disabled],
+fieldset[disabled] .btn {
+  cursor: not-allowed;
+  filter: alpha(opacity=65);
+  opacity: 0.65;
+  box-shadow: none;
+}
+a.btn.disabled,
+fieldset[disabled] a.btn {
+  pointer-events: none;
+}
+.btn-default {
+  color: #ffffff;
+  background-color: #94816c; #important
+  border-color: #aea79f;
+}
+
+.btn-default:focus,
+.btn-default.focus {
+  color: #ffffff;
+  background-color: #a1815a;
+  border-color: #6f675e;
+}
+
+.btn-default:hover {
+  color: #ffffff;
+  background-color: #a1815a;
+  border-color: #92897e;
+}
+.btn-default:active,
+.btn-default.active,
+.btn-group > .btn:not(:first-child):not(:last-child):not(.dropdown-toggle) {
+  border-radius: 0;
+}
+.btn-group > .btn:first-child {
+  margin-left: 0;
+}
+.btn-group > .btn:first-child:not(:last-child):not(.dropdown-toggle) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.btn-group > .btn:last-child:not(:first-child),
+.btn-group > .dropdown-toggle:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.btn-group > .btn-group {
+  float: left;
+}
+.btn-group > .btn-group:not(:first-child):not(:last-child) > .btn {
+  border-radius: 0;
+}
+.btn-group > .btn-group:first-child:not(:last-child) > .btn:last-child,
+.btn-group > .btn-group:first-child:not(:last-child) > .dropdown-toggle {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.btn-group > .btn-group:last-child:not(:first-child) > .btn:first-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.btn-group .dropdown-toggle:active,
+.btn-group.open .dropdown-toggle {
+  outline: 0;
+}
+.btn-group > .btn + .dropdown-toggle {
+  padding-right: 8px;
+  padding-left: 8px;
+}
+.btn-group > .btn-lg + .dropdown-toggle {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+.btn-group.open .dropdown-toggle {
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
+.btn-group.open .dropdown-toggle.btn-link {
+  box-shadow: none;
+}
+
+</style>
+<script>
+var str = '<div class="btn-group pull-right" style="position: fixed; right: 50px; top: 10px; z-index: 200"><button type="button" class="btn btn-default btn-xs dropdown-toggle" id="allCodeButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" data-_extension-text-contrast=""><span>Code</span> <span class="caret"></span></button><ul class="dropdown-menu" style="min-width: 50px;"><li><a id="rmd-show-all-code" href="#">Show All Code</a></li><li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li></ul></div>';
+document.write(str);
+</script>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    background-color: #ffffff;
+    color: #a0a0a0;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+div.sourceCode
+  { color: #1f1c1b; background-color: #ffffff; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #1f1c1b; } /* Normal */
+code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+code span.an { color: #ca60ca; } /* Annotation */
+code span.at { color: #0962ba; } /* Attribute */
+code span.bn { color: #b08000; } /* BaseN */
+code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+code span.cf { color: #5c7096; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #924c9d; } /* Char */
+code span.cn { color: #aa5500; } /* Constant */
+code span.co { color: #898887; } /* Comment */
+code span.cv { color: #0095ff; } /* CommentVar */
+code span.do { color: #607880; } /* Documentation */
+code span.dt { color: #0057ae; } /* DataType */
+code span.dv { color: #b08000; } /* DecVal */
+code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+code span.fl { color: #b08000; } /* Float */
+code span.fu { color: #644a9b; } /* Function */
+code span.im { color: #ff5500; } /* Import */
+code span.in { color: #b08000; } /* Information */
+code span.kw { color: #5c7096; font-weight: bold; } /* Keyword */
+code span.op { color: #5c7096; } /* Operator */
+code span.ot { color: #006e28; } /* Other */
+code span.pp { color: #006e28; } /* Preprocessor */
+code span.re { color: #0962ba; background-color: #e0e9f8; } /* RegionMarker */
+code span.sc { color: #3daee9; } /* SpecialChar */
+code span.ss { color: #ff5500; } /* SpecialString */
+code span.st { color: #bf0303; } /* String */
+code span.va { color: #0057ae; } /* Variable */
+code span.vs { color: #bf0303; } /* VerbatimString */
+code span.wa { color: #bf0303; } /* Warning */
+</style>
+
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="toc-logo"><a href="./"><img src="../images/kb_logo_text_black.png"></a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Welcome</a></li>
+<li class="part"><span><b>Overview</b></span></li>
+<li class="chapter" data-level="1" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>1</b> Document Classifiation</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="intro.html"><a href="intro.html#examples-of-classification-tasks"><i class="fa fa-check"></i><b>1.1</b> Examples of classification tasks</a></li>
+<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#expected-data"><i class="fa fa-check"></i><b>1.2</b> Expected data</a></li>
+<li class="chapter" data-level="1.3" data-path="intro.html"><a href="intro.html#loading-the-model"><i class="fa fa-check"></i><b>1.3</b> Loading the model</a></li>
+<li class="chapter" data-level="1.4" data-path="intro.html"><a href="intro.html#loading-the-tokenizer"><i class="fa fa-check"></i><b>1.4</b> Loading the tokenizer</a></li>
+</ul></li>
+<li class="part"><span><b>Examples</b></span></li>
+<li class="chapter" data-level="2" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html"><i class="fa fa-check"></i><b>2</b> Sentiment Analysis on ScandiSent</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#download-the-data"><i class="fa fa-check"></i><b>2.1</b> Download the data</a></li>
+<li class="chapter" data-level="2.2" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#import-libraries-and-set-device"><i class="fa fa-check"></i><b>2.2</b> Import libraries and set device</a></li>
+<li class="chapter" data-level="2.3" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#read-data"><i class="fa fa-check"></i><b>2.3</b> Read data</a></li>
+<li class="chapter" data-level="2.4" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#create-dataset-and-dataloader"><i class="fa fa-check"></i><b>2.4</b> Create Dataset and DataLoader</a>
+<ul>
+<li class="chapter" data-level="2.4.1" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#dataloader"><i class="fa fa-check"></i><b>2.4.1</b> DataLoader</a></li>
+<li class="chapter" data-level="2.4.2" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#data-collator-with-padding"><i class="fa fa-check"></i><b>2.4.2</b> Data collator with padding</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#training-loop"><i class="fa fa-check"></i><b>2.5</b> Training loop</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="methods.html"><a href="methods.html"><i class="fa fa-check"></i><b>3</b> Classify Parliamentary Motions</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="methods.html"><a href="methods.html#download-the-data-1"><i class="fa fa-check"></i><b>3.1</b> Download the data</a></li>
+<li class="chapter" data-level="3.2" data-path="methods.html"><a href="methods.html#import-libraries-and-set-device-1"><i class="fa fa-check"></i><b>3.2</b> Import libraries and set device</a></li>
+<li class="chapter" data-level="3.3" data-path="methods.html"><a href="methods.html#read-data-1"><i class="fa fa-check"></i><b>3.3</b> Read data</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="methods.html"><a href="methods.html#split-into-train-and-validation"><i class="fa fa-check"></i><b>3.3.1</b> Split into train and validation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="methods.html"><a href="methods.html#create-dataset-and-dataloader-1"><i class="fa fa-check"></i><b>3.4</b> Create Dataset and DataLoader</a>
+<ul>
+<li class="chapter" data-level="3.4.1" data-path="methods.html"><a href="methods.html#dataloader-1"><i class="fa fa-check"></i><b>3.4.1</b> DataLoader</a></li>
+<li class="chapter" data-level="3.4.2" data-path="methods.html"><a href="methods.html#data-collator-with-padding-1"><i class="fa fa-check"></i><b>3.4.2</b> Data collator with padding</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="methods.html"><a href="methods.html#training-loop-1"><i class="fa fa-check"></i><b>3.5</b> Training loop</a></li>
+</ul></li>
+<li class="part"><span><b>Advanced examples</b></span></li>
+<li class="chapter" data-level="4" data-path="add-extra-features-to-classifier.html"><a href="add-extra-features-to-classifier.html"><i class="fa fa-check"></i><b>4</b> Add extra features to classifier</a></li>
+<li class="part"><span><b>Share and Deploy</b></span></li>
+<li class="chapter" data-level="5" data-path="upload-to-huggingface.html"><a href="upload-to-huggingface.html"><i class="fa fa-check"></i><b>5</b> Upload to Huggingface</a></li>
+<li class="chapter" data-level="6" data-path="deploy-model-with-torchserve.html"><a href="deploy-model-with-torchserve.html"><i class="fa fa-check"></i><b>6</b> Deploy Model with torchserve</a></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="data-preprocessing-code.html"><a href="data-preprocessing-code.html"><i class="fa fa-check"></i><b>A</b> Data preprocessing code</a></li>
+<li class="chapter" data-level="B" data-path="model-training-code.html"><a href="model-training-code.html"><i class="fa fa-check"></i><b>B</b> Model Training Code</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Document Classification with Transformers</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="sentiment-analysis-on-scandisent" class="section level1" number="2">
+<h1><span class="header-section-number">Chapter 2</span> Sentiment Analysis on ScandiSent</h1>
+<div id="download-the-data" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Download the data</h2>
+</div>
+<div id="import-libraries-and-set-device" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> Import libraries and set device</h2>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python fold-show"><code class="sourceCode python"><span id="cb3-1"><a href="sentiment-analysis-on-scandisent.html#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb3-2"><a href="sentiment-analysis-on-scandisent.html#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> torch</span>
+<span id="cb3-3"><a href="sentiment-analysis-on-scandisent.html#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tqdm <span class="im">import</span> tqdm</span>
+<span id="cb3-4"><a href="sentiment-analysis-on-scandisent.html#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> torch.utils.data <span class="im">import</span> Dataset</span>
+<span id="cb3-5"><a href="sentiment-analysis-on-scandisent.html#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> transformers <span class="im">import</span> BertForSequenceClassification, AutoTokenizer, AdamW</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python fold-show"><code class="sourceCode python"><span id="cb4-1"><a href="sentiment-analysis-on-scandisent.html#cb4-1" aria-hidden="true" tabindex="-1"></a>device <span class="op">=</span> torch.device(<span class="st">&quot;cuda&quot;</span>) <span class="cf">if</span> torch.cuda.is_available() <span class="cf">else</span> torch.device(<span class="st">&quot;cpu&quot;</span>)</span>
+<span id="cb4-2"><a href="sentiment-analysis-on-scandisent.html#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(device)</span></code></pre></div>
+<pre><code>## cuda</code></pre>
+</div>
+<div id="read-data" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> Read data</h2>
+<p>We split the data the same way <span class="citation"><a href="#ref-Isbister2021ShouldWS" role="doc-biblioref">Isbister, Carlsson, and Sahlgren</a> (<a href="#ref-Isbister2021ShouldWS" role="doc-biblioref">2021</a>)</span> did.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python fold-show"><code class="sourceCode python"><span id="cb6-1"><a href="sentiment-analysis-on-scandisent.html#cb6-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.read_csv(<span class="st">&quot;ScandiSent/sv.csv&quot;</span>)</span>
+<span id="cb6-2"><a href="sentiment-analysis-on-scandisent.html#cb6-2" aria-hidden="true" tabindex="-1"></a>df_train <span class="op">=</span> df[:<span class="dv">7500</span>]  <span class="co"># First 7500 train set</span></span>
+<span id="cb6-3"><a href="sentiment-analysis-on-scandisent.html#cb6-3" aria-hidden="true" tabindex="-1"></a>df_valid <span class="op">=</span> df[<span class="dv">7500</span>:]  <span class="co"># Last 2500 evaluation</span></span></code></pre></div>
+<p>Let us take a look at the ScandiSent data again.</p>
+<div id="htmlwidget-cd0e8365772a354fb00b" class="reactable html-widget" style="width:auto;height:auto;"></div>
+<script type="application/json" data-for="htmlwidget-cd0e8365772a354fb00b">{"x":{"tag":{"name":"Reactable","attribs":{"data":{"text":["En gång i tiden hade de ett mycket bra kort, ikanokortet. Tyvärr har kortet försämrats oerhört mycket så nu är det totalt ointressant. Banken känns oerhört omodern. Långa väntetider i telefon till kundservice, och när de väl svarar ger de tyvärr inte alls något professionellt intryck. Jag är väldigt glad att jag inte längre är kund hos dem.","App ur funktion, ett antal falsklarm. Får ingen återkoppling vare sig på e-mail eller via telefon trots upprepade försök att maila och ringa. Det bara görs ”ärenden” av våra frågor om vad som är fel. Vi kan inte använda larmet nu då vi inte vet vad som är fel. Så arrogant bemötande!!!","Jag trodde att räntevillkoren på mina tidigare lån var bland marknadens bästa, eftersom jag håller mig uppdaterad, MEN Northmills erbjudande var överlägset, så det är den bästa deal jag har gjort med en bank.","Väldigt hjälpsam kundservis. Bra varor med topp kvalité och snabbservis.","Har försökt bli kund hos dem och hade en fråga innan. Deras kundservice har inte fungerat denna eller förra månaden. Vågar inte bli kund här även om det är billigt","Trevlig kommunikation, snabb och bra service! Rekommenderas!","Wow vilket jobb ni gjort hemma hos oss! Förstår inte hur ni lyckas få saker så otroligt rena! Jag är så glad och tacksam.","Dom påstår att man kan ha kostnadsfri profil. Men när jag sa åt dom att sluta ringa mig hela tiden och sluta försöka sälja på mig dyra abbonemang, då skrev han att han tar bort min profil. Fast jag sa att jag ville ha min kostnadsfria profil kvar. Väldigt oseriöst. Bluff företag.","Inte så bra lim och utlovad tejp var inte med","Klockren snabb och personlig hjälp vid beställning. Rekommenderas verkligen!"],"label":[0,0,1,1,0,1,1,0,0,1]},"columns":[{"accessor":"text","name":"text","type":"character","cell":[{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"adbce2cc59c2892fad21b38376f194cc"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-0c1baa12d8ec9683c439","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-0c1baa12d8ec9683c439"},"children":["{\"x\":{\"opts\":{\"content\":\"En gång i tiden hade de ett mycket bra kort, ikanokortet. Tyvärr har kortet försämrats oerhört mycket så nu är det totalt ointressant. Banken känns oerhört omodern. Långa väntetider i telefon till kundservice, och när de väl svarar ger de tyvärr inte alls något professionellt intryck. Jag är väldigt glad att jag inte längre är kund hos dem.\"},\"text\":\"En gång i tiden hade de ett mycket bra kort, ikanokortet. Tyvärr har kortet försämrats oerhört mycket så nu är det totalt ointressant. Banken känns oerhört omodern. Långa väntetider i telefon till kundservice, och när de väl svarar ger de tyvärr inte alls något professionellt intryck. Jag är väldigt glad att jag inte längre är kund hos dem.\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]},{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"0187ee6aff70331751bd5a1a6e77c297"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-41f507ef127b840140db","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-41f507ef127b840140db"},"children":["{\"x\":{\"opts\":{\"content\":\"App ur funktion, ett antal falsklarm. Får ingen återkoppling vare sig på e-mail eller via telefon trots upprepade försök att maila och ringa. Det bara görs ”ärenden” av våra frågor om vad som är fel. Vi kan inte använda larmet nu då vi inte vet vad som är fel. Så arrogant bemötande!!!\"},\"text\":\"App ur funktion, ett antal falsklarm. Får ingen återkoppling vare sig på e-mail eller via telefon trots upprepade försök att maila och ringa. Det bara görs ”ärenden” av våra frågor om vad som är fel. Vi kan inte använda larmet nu då vi inte vet vad som är fel. Så arrogant bemötande!!!\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]},{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"585678e0d1e9e9e004523dd9210cf20c"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-fdd17ed35e6f619089f1","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-fdd17ed35e6f619089f1"},"children":["{\"x\":{\"opts\":{\"content\":\"Jag trodde att räntevillkoren på mina tidigare lån var bland marknadens bästa, eftersom jag håller mig uppdaterad, MEN Northmills erbjudande var överlägset, så det är den bästa deal jag har gjort med en bank.\"},\"text\":\"Jag trodde att räntevillkoren på mina tidigare lån var bland marknadens bästa, eftersom jag håller mig uppdaterad, MEN Northmills erbjudande var överlägset, så det är den bästa deal jag har gjort med en bank.\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]},{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"b5c91be9b059d59428f8865419316a32"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-ade0a25f34fc60c194f8","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-ade0a25f34fc60c194f8"},"children":["{\"x\":{\"opts\":{\"content\":\"Väldigt hjälpsam kundservis. Bra varor med topp kvalité och snabbservis.\"},\"text\":\"Väldigt hjälpsam kundservis. Bra varor med topp kvalité och snabbservis.\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]},{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"9d2cc7af5acba1246cc2ad1046f099fb"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-6878cdbc8ca0b2c7f5a0","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-6878cdbc8ca0b2c7f5a0"},"children":["{\"x\":{\"opts\":{\"content\":\"Har försökt bli kund hos dem och hade en fråga innan. Deras kundservice har inte fungerat denna eller förra månaden. Vågar inte bli kund här även om det är billigt\"},\"text\":\"Har försökt bli kund hos dem och hade en fråga innan. Deras kundservice har inte fungerat denna eller förra månaden. Vågar inte bli kund här även om det är billigt\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]},{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"64864c238ad0fbf1fb008a6df55b14ac"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-cf0c345c8f4584d1c079","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-cf0c345c8f4584d1c079"},"children":["{\"x\":{\"opts\":{\"content\":\"Trevlig kommunikation, snabb och bra service! Rekommenderas!\"},\"text\":\"Trevlig kommunikation, snabb och bra service! Rekommenderas!\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]},{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"231429d362aa9765ffddb644415c1267"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-932e86e2054e9a657743","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-932e86e2054e9a657743"},"children":["{\"x\":{\"opts\":{\"content\":\"Wow vilket jobb ni gjort hemma hos oss! Förstår inte hur ni lyckas få saker så otroligt rena! Jag är så glad och tacksam.\"},\"text\":\"Wow vilket jobb ni gjort hemma hos oss! Förstår inte hur ni lyckas få saker så otroligt rena! Jag är så glad och tacksam.\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]},{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"4d8aaaedf86439c1c6b6c6a895d5327f"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-d0ee99d5e9008c1f694e","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-d0ee99d5e9008c1f694e"},"children":["{\"x\":{\"opts\":{\"content\":\"Dom påstår att man kan ha kostnadsfri profil. Men när jag sa åt dom att sluta ringa mig hela tiden och sluta försöka sälja på mig dyra abbonemang, då skrev han att han tar bort min profil. Fast jag sa att jag ville ha min kostnadsfria profil kvar. Väldigt oseriöst. Bluff företag.\"},\"text\":\"Dom påstår att man kan ha kostnadsfri profil. Men när jag sa åt dom att sluta ringa mig hela tiden och sluta försöka sälja på mig dyra abbonemang, då skrev han att han tar bort min profil. Fast jag sa att jag ville ha min kostnadsfria profil kvar. Väldigt oseriöst. Bluff företag.\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]},{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"433065f0aed7ad6bb721a64a1fc7b050"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-5f508934f13ba6f1c21a","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-5f508934f13ba6f1c21a"},"children":["{\"x\":{\"opts\":{\"content\":\"Inte så bra lim och utlovad tejp var inte med\"},\"text\":\"Inte så bra lim och utlovad tejp var inte med\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]},{"name":"div","attribs":{"style":{"text-decoration":"underline","text-decoration-style":"dotted","text-decoration-color":"#FF6B00","cursor":"info","white-space":"nowrap","overflow":"hidden","text-overflow":"ellipsis"}},"children":[{"name":"WidgetContainer","attribs":{"key":"74fe95608e7a1c250962a3f6c772620a"},"children":[{"name":"Fragment","attribs":[],"children":[{"name":"span","attribs":{"id":"htmlwidget-7031e9389259036ab15f","width":960,"height":500,"className":"tippy html-widget"},"children":[]},{"name":"script","attribs":{"type":"application/json","data-for":"htmlwidget-7031e9389259036ab15f"},"children":["{\"x\":{\"opts\":{\"content\":\"Klockren snabb och personlig hjälp vid beställning. Rekommenderas verkligen!\"},\"text\":\"Klockren snabb och personlig hjälp vid beställning. Rekommenderas verkligen!\"},\"evals\":[],\"jsHooks\":[]}"]}]}]}]}],"html":true},{"accessor":"label","name":"label","type":"numeric"}],"defaultPageSize":5,"paginationType":"numbers","showPageInfo":true,"minRows":1,"highlight":true,"striped":true,"theme":{"color":"#2f2f2f","borderColor":"#c5c5c5"},"dataKey":"e3814fecdd3e4dc8f4b8fd474c465f97"},"children":[]},"class":"reactR_markup"},"evals":[],"jsHooks":[]}</script>
+</div>
+<div id="create-dataset-and-dataloader" class="section level2" number="2.4">
+<h2><span class="header-section-number">2.4</span> Create Dataset and DataLoader</h2>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python fold-show"><code class="sourceCode python"><span id="cb7-1"><a href="sentiment-analysis-on-scandisent.html#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> SentimentDataset(Dataset):</span>
+<span id="cb7-2"><a href="sentiment-analysis-on-scandisent.html#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, df):</span>
+<span id="cb7-3"><a href="sentiment-analysis-on-scandisent.html#cb7-3" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.df <span class="op">=</span> df</span>
+<span id="cb7-4"><a href="sentiment-analysis-on-scandisent.html#cb7-4" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.tokenizer <span class="op">=</span> AutoTokenizer.from_pretrained(<span class="st">&quot;KB/bert-base-swedish-cased&quot;</span>)</span>
+<span id="cb7-5"><a href="sentiment-analysis-on-scandisent.html#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="sentiment-analysis-on-scandisent.html#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__len__</span>(<span class="va">self</span>):</span>
+<span id="cb7-7"><a href="sentiment-analysis-on-scandisent.html#cb7-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">len</span>(<span class="va">self</span>.df)</span>
+<span id="cb7-8"><a href="sentiment-analysis-on-scandisent.html#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="sentiment-analysis-on-scandisent.html#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__getitem__</span>(<span class="va">self</span>, index):</span>
+<span id="cb7-10"><a href="sentiment-analysis-on-scandisent.html#cb7-10" aria-hidden="true" tabindex="-1"></a>        df_row <span class="op">=</span> <span class="va">self</span>.df.iloc[index]</span>
+<span id="cb7-11"><a href="sentiment-analysis-on-scandisent.html#cb7-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-12"><a href="sentiment-analysis-on-scandisent.html#cb7-12" aria-hidden="true" tabindex="-1"></a>        label <span class="op">=</span> df_row[<span class="st">&quot;label&quot;</span>]</span>
+<span id="cb7-13"><a href="sentiment-analysis-on-scandisent.html#cb7-13" aria-hidden="true" tabindex="-1"></a>        text <span class="op">=</span> df_row[<span class="st">&quot;text&quot;</span>]</span>
+<span id="cb7-14"><a href="sentiment-analysis-on-scandisent.html#cb7-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-15"><a href="sentiment-analysis-on-scandisent.html#cb7-15" aria-hidden="true" tabindex="-1"></a>        tokenized_text <span class="op">=</span> <span class="va">self</span>.tokenizer(</span>
+<span id="cb7-16"><a href="sentiment-analysis-on-scandisent.html#cb7-16" aria-hidden="true" tabindex="-1"></a>            text, padding<span class="op">=</span><span class="va">True</span>, truncation<span class="op">=</span><span class="va">True</span>, max_length<span class="op">=</span><span class="dv">512</span>, return_tensors<span class="op">=</span><span class="st">&quot;pt&quot;</span>,</span>
+<span id="cb7-17"><a href="sentiment-analysis-on-scandisent.html#cb7-17" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb7-18"><a href="sentiment-analysis-on-scandisent.html#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="sentiment-analysis-on-scandisent.html#cb7-19" aria-hidden="true" tabindex="-1"></a>        label <span class="op">=</span> torch.tensor(label)</span>
+<span id="cb7-20"><a href="sentiment-analysis-on-scandisent.html#cb7-20" aria-hidden="true" tabindex="-1"></a>        tokenized_text[<span class="st">&quot;label&quot;</span>] <span class="op">=</span> label</span>
+<span id="cb7-21"><a href="sentiment-analysis-on-scandisent.html#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-22"><a href="sentiment-analysis-on-scandisent.html#cb7-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> tokenized_text</span></code></pre></div>
+<div id="dataloader" class="section level3" number="2.4.1">
+<h3><span class="header-section-number">2.4.1</span> DataLoader</h3>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python fold-show"><code class="sourceCode python"><span id="cb8-1"><a href="sentiment-analysis-on-scandisent.html#cb8-1" aria-hidden="true" tabindex="-1"></a>train_dataset <span class="op">=</span> SentimentDataset(df<span class="op">=</span>df_train)</span>
+<span id="cb8-2"><a href="sentiment-analysis-on-scandisent.html#cb8-2" aria-hidden="true" tabindex="-1"></a>valid_dataset <span class="op">=</span> SentimentDataset(df<span class="op">=</span>df_valid)</span>
+<span id="cb8-3"><a href="sentiment-analysis-on-scandisent.html#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="sentiment-analysis-on-scandisent.html#cb8-4" aria-hidden="true" tabindex="-1"></a>train_loader <span class="op">=</span> torch.utils.data.DataLoader(</span>
+<span id="cb8-5"><a href="sentiment-analysis-on-scandisent.html#cb8-5" aria-hidden="true" tabindex="-1"></a>    train_dataset, batch_size<span class="op">=</span><span class="dv">16</span>, collate_fn<span class="op">=</span>custom_collate_fn, shuffle<span class="op">=</span><span class="va">True</span>, num_workers<span class="op">=</span><span class="dv">4</span></span>
+<span id="cb8-6"><a href="sentiment-analysis-on-scandisent.html#cb8-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-7"><a href="sentiment-analysis-on-scandisent.html#cb8-7" aria-hidden="true" tabindex="-1"></a>valid_loader <span class="op">=</span> torch.utils.data.DataLoader(</span>
+<span id="cb8-8"><a href="sentiment-analysis-on-scandisent.html#cb8-8" aria-hidden="true" tabindex="-1"></a>    valid_dataset, batch_size<span class="op">=</span><span class="dv">16</span>, collate_fn<span class="op">=</span>custom_collate_fn, shuffle<span class="op">=</span><span class="va">False</span>, num_workers<span class="op">=</span><span class="dv">4</span></span>
+<span id="cb8-9"><a href="sentiment-analysis-on-scandisent.html#cb8-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="data-collator-with-padding" class="section level3" number="2.4.2">
+<h3><span class="header-section-number">2.4.2</span> Data collator with padding</h3>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python fold-show"><code class="sourceCode python"><span id="cb9-1"><a href="sentiment-analysis-on-scandisent.html#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> custom_collate_fn(data):</span>
+<span id="cb9-2"><a href="sentiment-analysis-on-scandisent.html#cb9-2" aria-hidden="true" tabindex="-1"></a>    tokens <span class="op">=</span> [sample[<span class="st">&quot;input_ids&quot;</span>][<span class="dv">0</span>] <span class="cf">for</span> sample <span class="kw">in</span> data]</span>
+<span id="cb9-3"><a href="sentiment-analysis-on-scandisent.html#cb9-3" aria-hidden="true" tabindex="-1"></a>    attention_masks <span class="op">=</span> [sample[<span class="st">&quot;attention_mask&quot;</span>][<span class="dv">0</span>] <span class="cf">for</span> sample <span class="kw">in</span> data]</span>
+<span id="cb9-4"><a href="sentiment-analysis-on-scandisent.html#cb9-4" aria-hidden="true" tabindex="-1"></a>    labels <span class="op">=</span> [sample[<span class="st">&quot;label&quot;</span>] <span class="cf">for</span> sample <span class="kw">in</span> data]</span>
+<span id="cb9-5"><a href="sentiment-analysis-on-scandisent.html#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="sentiment-analysis-on-scandisent.html#cb9-6" aria-hidden="true" tabindex="-1"></a>    attention_masks <span class="op">=</span> torch.nn.utils.rnn.pad_sequence(attention_masks, batch_first<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-7"><a href="sentiment-analysis-on-scandisent.html#cb9-7" aria-hidden="true" tabindex="-1"></a>    padded_tokens <span class="op">=</span> torch.nn.utils.rnn.pad_sequence(tokens, batch_first<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb9-8"><a href="sentiment-analysis-on-scandisent.html#cb9-8" aria-hidden="true" tabindex="-1"></a>    labels <span class="op">=</span> torch.stack(labels)  <span class="co"># List of B 1-length vectors to single vector of dimension B</span></span>
+<span id="cb9-9"><a href="sentiment-analysis-on-scandisent.html#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="sentiment-analysis-on-scandisent.html#cb9-10" aria-hidden="true" tabindex="-1"></a>    batch <span class="op">=</span> {<span class="st">&quot;input_ids&quot;</span>: padded_tokens, <span class="st">&quot;attention_mask&quot;</span>: attention_masks, <span class="st">&quot;labels&quot;</span>: labels}</span>
+<span id="cb9-11"><a href="sentiment-analysis-on-scandisent.html#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> batch</span></code></pre></div>
+</div>
+</div>
+<div id="training-loop" class="section level2" number="2.5">
+<h2><span class="header-section-number">2.5</span> Training loop</h2>
+<div class="help">
+<p><a href="https://huggingface.co/docs/transformers/preprocessing#everything-you-always-wanted-to-know-about-padding-and-truncation">Everything you always wanted to know about padding and truncation.</a></p>
+</div>
+
+</div>
+</div>
+<h3>References</h3>
+<div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-Isbister2021ShouldWS" class="csl-entry">
+Isbister, Tim, Fredrik Carlsson, and Magnus Sahlgren. 2021. <span>“Should We Stop Training More Monolingual Models, and Simply Use Machine Translation Instead?”</span> In <em>NODALIDA</em>.
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="intro.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="methods.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": true,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": false
+},
+"fontsettings": {
+"theme": "white",
+"family": "serif",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/kb-labb/guides/edit/master/02-examples.Rmd",
+"text": "Suggest an edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["https://github.com/kb-labb/guides/raw/master/02-examples.Rmd"],
+"toc": {
+"collapse": "section"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

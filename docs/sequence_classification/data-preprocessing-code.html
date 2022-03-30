@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>A Data preprocessing code | Document Classification with Transformers</title>
+  <meta name="description" content="This is a guide describing how to use KBLab’s transformer language models for document classification." />
+  <meta name="generator" content="bookdown 0.22 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="A Data preprocessing code | Document Classification with Transformers" />
+  <meta property="og:type" content="book" />
+  <meta property="og:url" content="https://github.com/kb-labb/guides/sentiment_analysis/" />
+  <meta property="og:image" content="https://github.com/kb-labb/guides/sentiment_analysis//../images/kb_logo_text_black.png" />
+  <meta property="og:description" content="This is a guide describing how to use KBLab’s transformer language models for document classification." />
+  <meta name="github-repo" content="kb-labb/guides" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="A Data preprocessing code | Document Classification with Transformers" />
+  
+  <meta name="twitter:description" content="This is a guide describing how to use KBLab’s transformer language models for document classification." />
+  <meta name="twitter:image" content="https://github.com/kb-labb/guides/sentiment_analysis//../images/kb_logo_text_black.png" />
+
+<meta name="author" content="Faton Rekathati, KBLab" />
+
+
+<meta name="date" content="2022-03-30" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="deploy-model-with-torchserve.html"/>
+<link rel="next" href="model-training-code.html"/>
+<script src="libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="libs/jquery-2.2.3/jquery.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.0.1/anchor-sections.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.0.1/anchor-sections.js"></script>
+<script src="libs/core-js-2.5.3/shim.min.js"></script>
+<script src="libs/react-17.0.0/react.min.js"></script>
+<script src="libs/react-17.0.0/react-dom.min.js"></script>
+<script src="libs/reactwidget-1.0.0/react-tools.js"></script>
+<script src="libs/htmlwidgets-1.5.3/htmlwidgets.js"></script>
+<script src="libs/reactable-binding-0.2.3.9000/reactable.js"></script>
+<link href="libs/tippyjs-3.2.0/themes/google.css" rel="stylesheet" />
+<link href="libs/tippyjs-3.2.0/themes/light-border.css" rel="stylesheet" />
+<link href="libs/tippyjs-3.2.0/themes/light.css" rel="stylesheet" />
+<link href="libs/tippyjs-3.2.0/themes/translucent.css" rel="stylesheet" />
+<script src="libs/tippyjs-3.2.0/tippy.all.min.js"></script>
+<script src="libs/tippy-binding-0.1.0/tippy.js"></script>
+<script>
+/* ========================================================================
+ * Bootstrap: transition.js v3.3.7
+ * http://getbootstrap.com/javascript/#transitions
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+
++function ($) {
+  'use strict';
+
+  // CSS TRANSITION SUPPORT (Shoutout: http://www.modernizr.com/)
+  // ============================================================
+
+  function transitionEnd() {
+    var el = document.createElement('bootstrap')
+
+    var transEndEventNames = {
+      WebkitTransition : 'webkitTransitionEnd',
+      MozTransition    : 'transitionend',
+      OTransition      : 'oTransitionEnd otransitionend',
+      transition       : 'transitionend'
+    }
+
+    for (var name in transEndEventNames) {
+      if (el.style[name] !== undefined) {
+        return { end: transEndEventNames[name] }
+      }
+    }
+
+    return false // explicit for ie8 (  ._.)
+  }
+
+  // http://blog.alexmaccaw.com/css-transitions
+  $.fn.emulateTransitionEnd = function (duration) {
+    var called = false
+    var $el = this
+    $(this).one('bsTransitionEnd', function () { called = true })
+    var callback = function () { if (!called) $($el).trigger($.support.transition.end) }
+    setTimeout(callback, duration)
+    return this
+  }
+
+  $(function () {
+    $.support.transition = transitionEnd()
+
+    if (!$.support.transition) return
+
+    $.event.special.bsTransitionEnd = {
+      bindType: $.support.transition.end,
+      delegateType: $.support.transition.end,
+      handle: function (e) {
+        if ($(e.target).is(this)) return e.handleObj.handler.apply(this, arguments)
+      }
+    }
+  })
+
+}(jQuery);
+</script>
+<script>
+/* ========================================================================
+ * Bootstrap: collapse.js v3.3.7
+ * http://getbootstrap.com/javascript/#collapse
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+/* jshint latedef: false */
+
++function ($) {
+  'use strict';
+
+  // COLLAPSE PUBLIC CLASS DEFINITION
+  // ================================
+
+  var Collapse = function (element, options) {
+    this.$element      = $(element)
+    this.options       = $.extend({}, Collapse.DEFAULTS, options)
+    this.$trigger      = $('[data-toggle="collapse"][href="#' + element.id + '"],' +
+                           '[data-toggle="collapse"][data-target="#' + element.id + '"]')
+    this.transitioning = null
+
+    if (this.options.parent) {
+      this.$parent = this.getParent()
+    } else {
+      this.addAriaAndCollapsedClass(this.$element, this.$trigger)
+    }
+
+    if (this.options.toggle) this.toggle()
+  }
+
+  Collapse.VERSION  = '3.3.7'
+
+  Collapse.TRANSITION_DURATION = 200
+
+  Collapse.DEFAULTS = {
+    toggle: true
+  }
+
+  Collapse.prototype.dimension = function () {
+    var hasWidth = this.$element.hasClass('width')
+    return hasWidth ? 'width' : 'height'
+  }
+
+  Collapse.prototype.show = function () {
+    if (this.transitioning || this.$element.hasClass('in')) return
+
+    var activesData
+    var actives = this.$parent && this.$parent.children('.panel').children('.in, .collapsing')
+
+    if (actives && actives.length) {
+      activesData = actives.data('bs.collapse')
+      if (activesData && activesData.transitioning) return
+    }
+
+    var startEvent = $.Event('show.bs.collapse')
+    this.$element.trigger(startEvent)
+    if (startEvent.isDefaultPrevented()) return
+
+    if (actives && actives.length) {
+      Plugin.call(actives, 'hide')
+      activesData || actives.data('bs.collapse', null)
+    }
+
+    var dimension = this.dimension()
+
+    this.$element
+      .removeClass('collapse')
+      .addClass('collapsing')[dimension](0)
+      .attr('aria-expanded', true)
+
+    this.$trigger
+      .removeClass('collapsed')
+      .attr('aria-expanded', true)
+
+    this.transitioning = 1
+
+    var complete = function () {
+      this.$element
+        .removeClass('collapsing')
+        .addClass('collapse in')[dimension]('')
+      this.transitioning = 0
+      this.$element
+        .trigger('shown.bs.collapse')
+    }
+
+    if (!$.support.transition) return complete.call(this)
+
+    var scrollSize = $.camelCase(['scroll', dimension].join('-'))
+
+    this.$element
+      .one('bsTransitionEnd', $.proxy(complete, this))
+      .emulateTransitionEnd(Collapse.TRANSITION_DURATION)[dimension](this.$element[0][scrollSize])
+  }
+
+  Collapse.prototype.hide = function () {
+    if (this.transitioning || !this.$element.hasClass('in')) return
+
+    var startEvent = $.Event('hide.bs.collapse')
+    this.$element.trigger(startEvent)
+    if (startEvent.isDefaultPrevented()) return
+
+    var dimension = this.dimension()
+
+    this.$element[dimension](this.$element[dimension]())[0].offsetHeight
+
+    this.$element
+      .addClass('collapsing')
+      .removeClass('collapse in')
+      .attr('aria-expanded', false)
+
+    this.$trigger
+      .addClass('collapsed')
+      .attr('aria-expanded', false)
+
+    this.transitioning = 1
+
+    var complete = function () {
+      this.transitioning = 0
+      this.$element
+        .removeClass('collapsing')
+        .addClass('collapse')
+        .trigger('hidden.bs.collapse')
+    }
+
+    if (!$.support.transition) return complete.call(this)
+
+    this.$element
+      [dimension](0)
+      .one('bsTransitionEnd', $.proxy(complete, this))
+      .emulateTransitionEnd(Collapse.TRANSITION_DURATION)
+  }
+
+  Collapse.prototype.toggle = function () {
+    this[this.$element.hasClass('in') ? 'hide' : 'show']()
+  }
+
+  Collapse.prototype.getParent = function () {
+    return $(this.options.parent)
+      .find('[data-toggle="collapse"][data-parent="' + this.options.parent + '"]')
+      .each($.proxy(function (i, element) {
+        var $element = $(element)
+        this.addAriaAndCollapsedClass(getTargetFromTrigger($element), $element)
+      }, this))
+      .end()
+  }
+
+  Collapse.prototype.addAriaAndCollapsedClass = function ($element, $trigger) {
+    var isOpen = $element.hasClass('in')
+
+    $element.attr('aria-expanded', isOpen)
+    $trigger
+      .toggleClass('collapsed', !isOpen)
+      .attr('aria-expanded', isOpen)
+  }
+
+  function getTargetFromTrigger($trigger) {
+    var href
+    var target = $trigger.attr('data-target')
+      || (href = $trigger.attr('href')) && href.replace(/.*(?=#[^\s]+$)/, '') // strip for ie7
+
+    return $(target)
+  }
+
+
+  // COLLAPSE PLUGIN DEFINITION
+  // ==========================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this   = $(this)
+      var data    = $this.data('bs.collapse')
+      var options = $.extend({}, Collapse.DEFAULTS, $this.data(), typeof option == 'object' && option)
+
+      if (!data && options.toggle && /show|hide/.test(option)) options.toggle = false
+      if (!data) $this.data('bs.collapse', (data = new Collapse(this, options)))
+      if (typeof option == 'string') data[option]()
+    })
+  }
+
+  var old = $.fn.collapse
+
+  $.fn.collapse             = Plugin
+  $.fn.collapse.Constructor = Collapse
+
+
+  // COLLAPSE NO CONFLICT
+  // ====================
+
+  $.fn.collapse.noConflict = function () {
+    $.fn.collapse = old
+    return this
+  }
+
+
+  // COLLAPSE DATA-API
+  // =================
+
+  $(document).on('click.bs.collapse.data-api', '[data-toggle="collapse"]', function (e) {
+    var $this   = $(this)
+
+    if (!$this.attr('data-target')) e.preventDefault()
+
+    var $target = getTargetFromTrigger($this)
+    var data    = $target.data('bs.collapse')
+    var option  = data ? 'toggle' : $this.data()
+
+    Plugin.call($target, option)
+  })
+
+}(jQuery);
+</script>
+<script>
+window.initializeCodeFolding = function(show) {
+
+  // handlers for show-all and hide all
+  $("#rmd-show-all-code").click(function() {
+    // close the dropdown menu when an option is clicked
+    $("#allCodeButton").dropdown("toggle");
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('show');
+    });
+  });
+  $("#rmd-hide-all-code").click(function() {
+    // close the dropdown menu when an option is clicked
+    $("#allCodeButton").dropdown("toggle");
+    $('div.r-code-collapse').each(function() {
+      $(this).collapse('hide');
+    });
+  });
+
+  // index for unique code element ids
+  var currentIndex = 1;
+
+  // select all R code blocks
+  var rCodeBlocks = $('pre.sourceCode, pre.r, pre.python, pre.bash, pre.sql, pre.cpp, pre.stan');
+  rCodeBlocks.each(function() {
+
+    // if code block has been labeled with class `fold-show`, show the code on init!
+    var classList = $(this).attr('class').split(/\s+/);
+    for (var i = 0; i < classList.length; i++) {
+    if (classList[i] === 'fold-show') {
+        show = true;
+      }
+    }
+
+    // create a collapsable div to wrap the code in
+    var div = $('<div class="collapse r-code-collapse"></div>');
+    if (show)
+      div.addClass('in');
+    var id = 'rcode-643E0F36' + currentIndex++;
+    div.attr('id', id);
+    $(this).before(div);
+    $(this).detach().appendTo(div);
+
+    // add a show code button right above
+    var showCodeText = $('<span>' + (show ? 'Hide' : 'Code') + '</span>');
+    var showCodeButton = $('<button type="button" class="btn btn-default btn-xs code-folding-btn pull-right"></button>');
+    showCodeButton.append(showCodeText);
+    showCodeButton
+        .attr('data-toggle', 'collapse')
+        .attr('data-target', '#' + id)
+        .attr('aria-expanded', show)
+        .attr('aria-controls', id);
+
+    var buttonRow = $('<div class="row"></div>');
+    var buttonCol = $('<div class="col-md-12"></div>');
+
+    buttonCol.append(showCodeButton);
+    buttonRow.append(buttonCol);
+
+    div.before(buttonRow);
+
+    // hack: return show to false, otherwise all next codeBlocks will be shown!
+    show = false;
+
+    // update state of button on show/hide
+    div.on('hidden.bs.collapse', function () {
+      showCodeText.text('Code');
+    });
+    div.on('show.bs.collapse', function () {
+      showCodeText.text('Hide');
+    });
+  });
+
+}
+</script>
+<script>
+/* ========================================================================
+ * Bootstrap: dropdown.js v3.3.7
+ * http://getbootstrap.com/javascript/#dropdowns
+ * ========================================================================
+ * Copyright 2011-2016 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ * ======================================================================== */
+
+
++function ($) {
+  'use strict';
+
+  // DROPDOWN CLASS DEFINITION
+  // =========================
+
+  var backdrop = '.dropdown-backdrop'
+  var toggle   = '[data-toggle="dropdown"]'
+  var Dropdown = function (element) {
+    $(element).on('click.bs.dropdown', this.toggle)
+  }
+
+  Dropdown.VERSION = '3.3.7'
+
+  function getParent($this) {
+    var selector = $this.attr('data-target')
+
+    if (!selector) {
+      selector = $this.attr('href')
+      selector = selector && /#[A-Za-z]/.test(selector) && selector.replace(/.*(?=#[^\s]*$)/, '') // strip for ie7
+    }
+
+    var $parent = selector && $(selector)
+
+    return $parent && $parent.length ? $parent : $this.parent()
+  }
+
+  function clearMenus(e) {
+    if (e && e.which === 3) return
+    $(backdrop).remove()
+    $(toggle).each(function () {
+      var $this         = $(this)
+      var $parent       = getParent($this)
+      var relatedTarget = { relatedTarget: this }
+
+      if (!$parent.hasClass('open')) return
+
+      if (e && e.type == 'click' && /input|textarea/i.test(e.target.tagName) && $.contains($parent[0], e.target)) return
+
+      $parent.trigger(e = $.Event('hide.bs.dropdown', relatedTarget))
+
+      if (e.isDefaultPrevented()) return
+
+      $this.attr('aria-expanded', 'false')
+      $parent.removeClass('open').trigger($.Event('hidden.bs.dropdown', relatedTarget))
+    })
+  }
+
+  Dropdown.prototype.toggle = function (e) {
+    var $this = $(this)
+
+    if ($this.is('.disabled, :disabled')) return
+
+    var $parent  = getParent($this)
+    var isActive = $parent.hasClass('open')
+
+    clearMenus()
+
+    if (!isActive) {
+      if ('ontouchstart' in document.documentElement && !$parent.closest('.navbar-nav').length) {
+        // if mobile we use a backdrop because click events don't delegate
+        $(document.createElement('div'))
+          .addClass('dropdown-backdrop')
+          .insertAfter($(this))
+          .on('click', clearMenus)
+      }
+
+      var relatedTarget = { relatedTarget: this }
+      $parent.trigger(e = $.Event('show.bs.dropdown', relatedTarget))
+
+      if (e.isDefaultPrevented()) return
+
+      $this
+        .trigger('focus')
+        .attr('aria-expanded', 'true')
+
+      $parent
+        .toggleClass('open')
+        .trigger($.Event('shown.bs.dropdown', relatedTarget))
+    }
+
+    return false
+  }
+
+  Dropdown.prototype.keydown = function (e) {
+    if (!/(38|40|27|32)/.test(e.which) || /input|textarea/i.test(e.target.tagName)) return
+
+    var $this = $(this)
+
+    e.preventDefault()
+    e.stopPropagation()
+
+    if ($this.is('.disabled, :disabled')) return
+
+    var $parent  = getParent($this)
+    var isActive = $parent.hasClass('open')
+
+    if (!isActive && e.which != 27 || isActive && e.which == 27) {
+      if (e.which == 27) $parent.find(toggle).trigger('focus')
+      return $this.trigger('click')
+    }
+
+    var desc = ' li:not(.disabled):visible a'
+    var $items = $parent.find('.dropdown-menu' + desc)
+
+    if (!$items.length) return
+
+    var index = $items.index(e.target)
+
+    if (e.which == 38 && index > 0)                 index--         // up
+    if (e.which == 40 && index < $items.length - 1) index++         // down
+    if (!~index)                                    index = 0
+
+    $items.eq(index).trigger('focus')
+  }
+
+
+  // DROPDOWN PLUGIN DEFINITION
+  // ==========================
+
+  function Plugin(option) {
+    return this.each(function () {
+      var $this = $(this)
+      var data  = $this.data('bs.dropdown')
+
+      if (!data) $this.data('bs.dropdown', (data = new Dropdown(this)))
+      if (typeof option == 'string') data[option].call($this)
+    })
+  }
+
+  var old = $.fn.dropdown
+
+  $.fn.dropdown             = Plugin
+  $.fn.dropdown.Constructor = Dropdown
+
+
+  // DROPDOWN NO CONFLICT
+  // ====================
+
+  $.fn.dropdown.noConflict = function () {
+    $.fn.dropdown = old
+    return this
+  }
+
+
+  // APPLY TO STANDARD DROPDOWN ELEMENTS
+  // ===================================
+
+  $(document)
+    .on('click.bs.dropdown.data-api', clearMenus)
+    .on('click.bs.dropdown.data-api', '.dropdown form', function (e) { e.stopPropagation() })
+    .on('click.bs.dropdown.data-api', toggle, Dropdown.prototype.toggle)
+    .on('keydown.bs.dropdown.data-api', toggle, Dropdown.prototype.keydown)
+    .on('keydown.bs.dropdown.data-api', '.dropdown-menu', Dropdown.prototype.keydown)
+
+}(jQuery);
+</script>
+<style type="text/css">
+.code-folding-btn {
+  margin-bottom: 4px;
+}
+
+.row { display: flex; }
+.collapse { display: none; }
+.in { display:block }
+.pull-right > .dropdown-menu {
+    right: 0;
+    left: auto;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    display: none;
+    float: left;
+    min-width: 160px;
+    padding: 5px 0;
+    margin: 2px 0 0;
+    font-size: 14px;
+    text-align: left;
+    list-style: none;
+    background-color: #fff;
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    border: 1px solid #ccc;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: 4px;
+    -webkit-box-shadow: 0 6px 12px rgba(0,0,0,.175);
+    box-shadow: 0 6px 12px rgba(0,0,0,.175);
+}
+
+.open > .dropdown-menu {
+    display: block;
+    color: #ffffff;
+    background-color: #ffffff;
+    background-image: none;
+    border-color: #92897e;
+}
+
+.dropdown-menu > li > a {
+  display: block;
+  padding: 3px 20px;
+  clear: both;
+  font-weight: 400;
+  line-height: 1.42857143;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+  color: #ffffff;
+  text-decoration: none;
+  background-color: #a14747;
+}
+
+.dropdown-menu > .active > a,
+.dropdown-menu > .active > a:hover,
+.dropdown-menu > .active > a:focus {
+  color: #ffffff;
+  text-decoration: none;
+  background-color: #a14747;
+  outline: 0;
+}
+.dropdown-menu > .disabled > a,
+.dropdown-menu > .disabled > a:hover,
+.dropdown-menu > .disabled > a:focus {
+  color: #aea79f;
+}
+
+.dropdown-menu > .disabled > a:hover,
+.dropdown-menu > .disabled > a:focus {
+  text-decoration: none;
+  cursor: not-allowed;
+  background-color: transparent;
+  background-image: none;
+  filter: progid:DXImageTransform.Microsoft.gradient(enabled = false);
+}
+
+.btn {
+  display: inline-block;
+  margin-bottom: 1;
+  font-weight: normal;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  -ms-touch-action: manipulation;
+      touch-action: manipulation;
+  cursor: pointer;
+  background-image: none;
+  border: 1px solid transparent;
+  padding: 4px 8px;
+  font-size: 14px;
+  line-height: 1.42857143;
+  border-radius: 4px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn.active:focus,
+.btn.focus,
+.btn:active.focus,
+.btn.active.focus {
+  outline: 5px auto -webkit-focus-ring-color;
+  outline-offset: -2px;
+}
+.btn:hover,
+.btn:focus,
+.btn.focus {
+  color: #ffffff;
+  text-decoration: none;
+}
+.btn:active,
+.btn.active {
+  background-image: none;
+  outline: 0;
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
+.btn.disabled,
+.btn[disabled],
+fieldset[disabled] .btn {
+  cursor: not-allowed;
+  filter: alpha(opacity=65);
+  opacity: 0.65;
+  box-shadow: none;
+}
+a.btn.disabled,
+fieldset[disabled] a.btn {
+  pointer-events: none;
+}
+.btn-default {
+  color: #ffffff;
+  background-color: #94816c; #important
+  border-color: #aea79f;
+}
+
+.btn-default:focus,
+.btn-default.focus {
+  color: #ffffff;
+  background-color: #a1815a;
+  border-color: #6f675e;
+}
+
+.btn-default:hover {
+  color: #ffffff;
+  background-color: #a1815a;
+  border-color: #92897e;
+}
+.btn-default:active,
+.btn-default.active,
+.btn-group > .btn:not(:first-child):not(:last-child):not(.dropdown-toggle) {
+  border-radius: 0;
+}
+.btn-group > .btn:first-child {
+  margin-left: 0;
+}
+.btn-group > .btn:first-child:not(:last-child):not(.dropdown-toggle) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.btn-group > .btn:last-child:not(:first-child),
+.btn-group > .dropdown-toggle:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.btn-group > .btn-group {
+  float: left;
+}
+.btn-group > .btn-group:not(:first-child):not(:last-child) > .btn {
+  border-radius: 0;
+}
+.btn-group > .btn-group:first-child:not(:last-child) > .btn:last-child,
+.btn-group > .btn-group:first-child:not(:last-child) > .dropdown-toggle {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.btn-group > .btn-group:last-child:not(:first-child) > .btn:first-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.btn-group .dropdown-toggle:active,
+.btn-group.open .dropdown-toggle {
+  outline: 0;
+}
+.btn-group > .btn + .dropdown-toggle {
+  padding-right: 8px;
+  padding-left: 8px;
+}
+.btn-group > .btn-lg + .dropdown-toggle {
+  padding-right: 12px;
+  padding-left: 12px;
+}
+.btn-group.open .dropdown-toggle {
+  box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+}
+.btn-group.open .dropdown-toggle.btn-link {
+  box-shadow: none;
+}
+
+</style>
+<script>
+var str = '<div class="btn-group pull-right" style="position: fixed; right: 50px; top: 10px; z-index: 200"><button type="button" class="btn btn-default btn-xs dropdown-toggle" id="allCodeButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true" data-_extension-text-contrast=""><span>Code</span> <span class="caret"></span></button><ul class="dropdown-menu" style="min-width: 50px;"><li><a id="rmd-show-all-code" href="#">Show All Code</a></li><li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li></ul></div>';
+document.write(str);
+</script>
+<script>
+$(document).ready(function () {
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    background-color: #ffffff;
+    color: #a0a0a0;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+div.sourceCode
+  { color: #1f1c1b; background-color: #ffffff; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #1f1c1b; } /* Normal */
+code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+code span.an { color: #ca60ca; } /* Annotation */
+code span.at { color: #0962ba; } /* Attribute */
+code span.bn { color: #b08000; } /* BaseN */
+code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+code span.cf { color: #5c7096; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #924c9d; } /* Char */
+code span.cn { color: #aa5500; } /* Constant */
+code span.co { color: #898887; } /* Comment */
+code span.cv { color: #0095ff; } /* CommentVar */
+code span.do { color: #607880; } /* Documentation */
+code span.dt { color: #0057ae; } /* DataType */
+code span.dv { color: #b08000; } /* DecVal */
+code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+code span.fl { color: #b08000; } /* Float */
+code span.fu { color: #644a9b; } /* Function */
+code span.im { color: #ff5500; } /* Import */
+code span.in { color: #b08000; } /* Information */
+code span.kw { color: #5c7096; font-weight: bold; } /* Keyword */
+code span.op { color: #5c7096; } /* Operator */
+code span.ot { color: #006e28; } /* Other */
+code span.pp { color: #006e28; } /* Preprocessor */
+code span.re { color: #0962ba; background-color: #e0e9f8; } /* RegionMarker */
+code span.sc { color: #3daee9; } /* SpecialChar */
+code span.ss { color: #ff5500; } /* SpecialString */
+code span.st { color: #bf0303; } /* String */
+code span.va { color: #0057ae; } /* Variable */
+code span.vs { color: #bf0303; } /* VerbatimString */
+code span.wa { color: #bf0303; } /* Warning */
+</style>
+
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li class="toc-logo"><a href="./"><img src="../images/kb_logo_text_black.png"></a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Welcome</a></li>
+<li class="part"><span><b>Overview</b></span></li>
+<li class="chapter" data-level="1" data-path="intro.html"><a href="intro.html"><i class="fa fa-check"></i><b>1</b> Document Classifiation</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="intro.html"><a href="intro.html#examples-of-classification-tasks"><i class="fa fa-check"></i><b>1.1</b> Examples of classification tasks</a></li>
+<li class="chapter" data-level="1.2" data-path="intro.html"><a href="intro.html#expected-data"><i class="fa fa-check"></i><b>1.2</b> Expected data</a></li>
+<li class="chapter" data-level="1.3" data-path="intro.html"><a href="intro.html#loading-the-model"><i class="fa fa-check"></i><b>1.3</b> Loading the model</a></li>
+<li class="chapter" data-level="1.4" data-path="intro.html"><a href="intro.html#loading-the-tokenizer"><i class="fa fa-check"></i><b>1.4</b> Loading the tokenizer</a></li>
+</ul></li>
+<li class="part"><span><b>Examples</b></span></li>
+<li class="chapter" data-level="2" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html"><i class="fa fa-check"></i><b>2</b> Sentiment Analysis on ScandiSent</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#download-the-data"><i class="fa fa-check"></i><b>2.1</b> Download the data</a></li>
+<li class="chapter" data-level="2.2" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#import-libraries-and-set-device"><i class="fa fa-check"></i><b>2.2</b> Import libraries and set device</a></li>
+<li class="chapter" data-level="2.3" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#read-data"><i class="fa fa-check"></i><b>2.3</b> Read data</a></li>
+<li class="chapter" data-level="2.4" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#create-dataset-and-dataloader"><i class="fa fa-check"></i><b>2.4</b> Create Dataset and DataLoader</a>
+<ul>
+<li class="chapter" data-level="2.4.1" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#dataloader"><i class="fa fa-check"></i><b>2.4.1</b> DataLoader</a></li>
+<li class="chapter" data-level="2.4.2" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#data-collator-with-padding"><i class="fa fa-check"></i><b>2.4.2</b> Data collator with padding</a></li>
+</ul></li>
+<li class="chapter" data-level="2.5" data-path="sentiment-analysis-on-scandisent.html"><a href="sentiment-analysis-on-scandisent.html#training-loop"><i class="fa fa-check"></i><b>2.5</b> Training loop</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="methods.html"><a href="methods.html"><i class="fa fa-check"></i><b>3</b> Classify Parliamentary Motions</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="methods.html"><a href="methods.html#download-the-data-1"><i class="fa fa-check"></i><b>3.1</b> Download the data</a></li>
+<li class="chapter" data-level="3.2" data-path="methods.html"><a href="methods.html#import-libraries-and-set-device-1"><i class="fa fa-check"></i><b>3.2</b> Import libraries and set device</a></li>
+<li class="chapter" data-level="3.3" data-path="methods.html"><a href="methods.html#read-data-1"><i class="fa fa-check"></i><b>3.3</b> Read data</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="methods.html"><a href="methods.html#split-into-train-and-validation"><i class="fa fa-check"></i><b>3.3.1</b> Split into train and validation</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="methods.html"><a href="methods.html#create-dataset-and-dataloader-1"><i class="fa fa-check"></i><b>3.4</b> Create Dataset and DataLoader</a>
+<ul>
+<li class="chapter" data-level="3.4.1" data-path="methods.html"><a href="methods.html#dataloader-1"><i class="fa fa-check"></i><b>3.4.1</b> DataLoader</a></li>
+<li class="chapter" data-level="3.4.2" data-path="methods.html"><a href="methods.html#data-collator-with-padding-1"><i class="fa fa-check"></i><b>3.4.2</b> Data collator with padding</a></li>
+</ul></li>
+<li class="chapter" data-level="3.5" data-path="methods.html"><a href="methods.html#training-loop-1"><i class="fa fa-check"></i><b>3.5</b> Training loop</a></li>
+</ul></li>
+<li class="part"><span><b>Advanced examples</b></span></li>
+<li class="chapter" data-level="4" data-path="add-extra-features-to-classifier.html"><a href="add-extra-features-to-classifier.html"><i class="fa fa-check"></i><b>4</b> Add extra features to classifier</a></li>
+<li class="part"><span><b>Share and Deploy</b></span></li>
+<li class="chapter" data-level="5" data-path="upload-to-huggingface.html"><a href="upload-to-huggingface.html"><i class="fa fa-check"></i><b>5</b> Upload to Huggingface</a></li>
+<li class="chapter" data-level="6" data-path="deploy-model-with-torchserve.html"><a href="deploy-model-with-torchserve.html"><i class="fa fa-check"></i><b>6</b> Deploy Model with torchserve</a></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="data-preprocessing-code.html"><a href="data-preprocessing-code.html"><i class="fa fa-check"></i><b>A</b> Data preprocessing code</a></li>
+<li class="chapter" data-level="B" data-path="model-training-code.html"><a href="model-training-code.html"><i class="fa fa-check"></i><b>B</b> Model Training Code</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Document Classification with Transformers</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="data-preprocessing-code" class="section level1" number="7">
+<h1><span class="header-section-number">A</span> Data preprocessing code</h1>
+<div class="sourceCode" id="cb18"><pre class="sourceCode python fold-show"><code class="sourceCode python"><span id="cb18-1"><a href="data-preprocessing-code.html#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb18-2"><a href="data-preprocessing-code.html#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> json</span>
+<span id="cb18-3"><a href="data-preprocessing-code.html#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb18-4"><a href="data-preprocessing-code.html#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> multiprocessing <span class="im">as</span> mp</span>
+<span id="cb18-5"><a href="data-preprocessing-code.html#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> bs4 <span class="im">import</span> BeautifulSoup, NavigableString</span>
+<span id="cb18-6"><a href="data-preprocessing-code.html#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="data-preprocessing-code.html#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="data-preprocessing-code.html#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> read_motion_json(filename, folder<span class="op">=</span><span class="st">&quot;data_json&quot;</span>):</span>
+<span id="cb18-9"><a href="data-preprocessing-code.html#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> <span class="bu">open</span>(os.path.join(folder, filename), <span class="st">&quot;r&quot;</span>) <span class="im">as</span> f:</span>
+<span id="cb18-10"><a href="data-preprocessing-code.html#cb18-10" aria-hidden="true" tabindex="-1"></a>        motion_json <span class="op">=</span> json.load(f)</span>
+<span id="cb18-11"><a href="data-preprocessing-code.html#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="data-preprocessing-code.html#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> motion_json</span>
+<span id="cb18-13"><a href="data-preprocessing-code.html#cb18-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-14"><a href="data-preprocessing-code.html#cb18-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-15"><a href="data-preprocessing-code.html#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> author_party_count(motion):</span>
+<span id="cb18-16"><a href="data-preprocessing-code.html#cb18-16" aria-hidden="true" tabindex="-1"></a>    authors <span class="op">=</span> motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokintressent&quot;</span>][<span class="st">&quot;intressent&quot;</span>]</span>
+<span id="cb18-17"><a href="data-preprocessing-code.html#cb18-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-18"><a href="data-preprocessing-code.html#cb18-18" aria-hidden="true" tabindex="-1"></a>    party_count <span class="op">=</span> {</span>
+<span id="cb18-19"><a href="data-preprocessing-code.html#cb18-19" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;V&quot;</span>: <span class="dv">0</span>,</span>
+<span id="cb18-20"><a href="data-preprocessing-code.html#cb18-20" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;S&quot;</span>: <span class="dv">0</span>,</span>
+<span id="cb18-21"><a href="data-preprocessing-code.html#cb18-21" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;MP&quot;</span>: <span class="dv">0</span>,</span>
+<span id="cb18-22"><a href="data-preprocessing-code.html#cb18-22" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;C&quot;</span>: <span class="dv">0</span>,</span>
+<span id="cb18-23"><a href="data-preprocessing-code.html#cb18-23" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;L&quot;</span>: <span class="dv">0</span>,</span>
+<span id="cb18-24"><a href="data-preprocessing-code.html#cb18-24" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;KD&quot;</span>: <span class="dv">0</span>,</span>
+<span id="cb18-25"><a href="data-preprocessing-code.html#cb18-25" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;M&quot;</span>: <span class="dv">0</span>,</span>
+<span id="cb18-26"><a href="data-preprocessing-code.html#cb18-26" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;SD&quot;</span>: <span class="dv">0</span>,</span>
+<span id="cb18-27"><a href="data-preprocessing-code.html#cb18-27" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;-&quot;</span>: <span class="dv">0</span>,</span>
+<span id="cb18-28"><a href="data-preprocessing-code.html#cb18-28" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb18-29"><a href="data-preprocessing-code.html#cb18-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-30"><a href="data-preprocessing-code.html#cb18-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(authors, <span class="bu">dict</span>):</span>
+<span id="cb18-31"><a href="data-preprocessing-code.html#cb18-31" aria-hidden="true" tabindex="-1"></a>        authors <span class="op">=</span> [authors]</span>
+<span id="cb18-32"><a href="data-preprocessing-code.html#cb18-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-33"><a href="data-preprocessing-code.html#cb18-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> author <span class="kw">in</span> authors:</span>
+<span id="cb18-34"><a href="data-preprocessing-code.html#cb18-34" aria-hidden="true" tabindex="-1"></a>        party_count[author[<span class="st">&quot;partibet&quot;</span>]] <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb18-35"><a href="data-preprocessing-code.html#cb18-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-36"><a href="data-preprocessing-code.html#cb18-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> party_count</span>
+<span id="cb18-37"><a href="data-preprocessing-code.html#cb18-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-38"><a href="data-preprocessing-code.html#cb18-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-39"><a href="data-preprocessing-code.html#cb18-39" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_html(motion):</span>
+<span id="cb18-40"><a href="data-preprocessing-code.html#cb18-40" aria-hidden="true" tabindex="-1"></a>    motion_html <span class="op">=</span> motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;html&quot;</span>]</span>
+<span id="cb18-41"><a href="data-preprocessing-code.html#cb18-41" aria-hidden="true" tabindex="-1"></a>    soup <span class="op">=</span> BeautifulSoup(motion_html, <span class="st">&quot;html.parser&quot;</span>)</span>
+<span id="cb18-42"><a href="data-preprocessing-code.html#cb18-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-43"><a href="data-preprocessing-code.html#cb18-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;status&quot;</span>] <span class="op">==</span> <span class="st">&quot;Utgången&quot;</span>:</span>
+<span id="cb18-44"><a href="data-preprocessing-code.html#cb18-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb18-45"><a href="data-preprocessing-code.html#cb18-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-46"><a href="data-preprocessing-code.html#cb18-46" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Remove signatures at bottom of bill that contain party affiliations</span></span>
+<span id="cb18-47"><a href="data-preprocessing-code.html#cb18-47" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> signature <span class="kw">in</span> soup.find_all(</span>
+<span id="cb18-48"><a href="data-preprocessing-code.html#cb18-48" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;p&quot;</span>, attrs<span class="op">=</span>{<span class="st">&quot;style&quot;</span>: <span class="st">&quot;-aw-sdt-tag:CC_Underskrifter; -aw-sdt-title:CC_Underskrifter&quot;</span>}</span>
+<span id="cb18-49"><a href="data-preprocessing-code.html#cb18-49" aria-hidden="true" tabindex="-1"></a>    ):</span>
+<span id="cb18-50"><a href="data-preprocessing-code.html#cb18-50" aria-hidden="true" tabindex="-1"></a>        signature.extract()</span>
+<span id="cb18-51"><a href="data-preprocessing-code.html#cb18-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-52"><a href="data-preprocessing-code.html#cb18-52" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> table <span class="kw">in</span> soup.find_all(<span class="st">&quot;table&quot;</span>):</span>
+<span id="cb18-53"><a href="data-preprocessing-code.html#cb18-53" aria-hidden="true" tabindex="-1"></a>        table.extract()</span>
+<span id="cb18-54"><a href="data-preprocessing-code.html#cb18-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-55"><a href="data-preprocessing-code.html#cb18-55" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Add periods to headers, so we can segment sentences properly later.</span></span>
+<span id="cb18-56"><a href="data-preprocessing-code.html#cb18-56" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> title <span class="kw">in</span> soup.find_all([<span class="st">&quot;h1&quot;</span>, <span class="st">&quot;h2&quot;</span>, <span class="st">&quot;h3&quot;</span>]):</span>
+<span id="cb18-57"><a href="data-preprocessing-code.html#cb18-57" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> span <span class="kw">in</span> title.find_all(<span class="st">&quot;span&quot;</span>):</span>
+<span id="cb18-58"><a href="data-preprocessing-code.html#cb18-58" aria-hidden="true" tabindex="-1"></a>            span.insert(<span class="bu">len</span>(span.get_text()), NavigableString(<span class="st">&quot;.&quot;</span>))</span>
+<span id="cb18-59"><a href="data-preprocessing-code.html#cb18-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-60"><a href="data-preprocessing-code.html#cb18-60" aria-hidden="true" tabindex="-1"></a>    <span class="co"># We only want text after motion has started</span></span>
+<span id="cb18-61"><a href="data-preprocessing-code.html#cb18-61" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> soup.find(<span class="st">&quot;a&quot;</span>, attrs<span class="op">=</span>{<span class="st">&quot;name&quot;</span>: <span class="st">&quot;MotionsStart&quot;</span>}) <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb18-62"><a href="data-preprocessing-code.html#cb18-62" aria-hidden="true" tabindex="-1"></a>        motion_start <span class="op">=</span> soup.find(<span class="st">&quot;a&quot;</span>, attrs<span class="op">=</span>{<span class="st">&quot;name&quot;</span>: <span class="st">&quot;MotionsStart&quot;</span>})</span>
+<span id="cb18-63"><a href="data-preprocessing-code.html#cb18-63" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb18-64"><a href="data-preprocessing-code.html#cb18-64" aria-hidden="true" tabindex="-1"></a>        motion_start <span class="op">=</span> soup.find(<span class="st">&quot;h1&quot;</span>)</span>
+<span id="cb18-65"><a href="data-preprocessing-code.html#cb18-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-66"><a href="data-preprocessing-code.html#cb18-66" aria-hidden="true" tabindex="-1"></a>    soup <span class="op">=</span> motion_start.find_all_next()</span>
+<span id="cb18-67"><a href="data-preprocessing-code.html#cb18-67" aria-hidden="true" tabindex="-1"></a>    soup <span class="op">=</span> BeautifulSoup(<span class="st">&quot;&quot;</span>.join([<span class="bu">str</span>(tag) <span class="cf">for</span> tag <span class="kw">in</span> soup]), <span class="st">&quot;html.parser&quot;</span>)</span>
+<span id="cb18-68"><a href="data-preprocessing-code.html#cb18-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-69"><a href="data-preprocessing-code.html#cb18-69" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Remove header tags because header text is duplicated in span tags.</span></span>
+<span id="cb18-70"><a href="data-preprocessing-code.html#cb18-70" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> title <span class="kw">in</span> soup.find_all([<span class="st">&quot;h1&quot;</span>, <span class="st">&quot;h2&quot;</span>, <span class="st">&quot;h3&quot;</span>]):</span>
+<span id="cb18-71"><a href="data-preprocessing-code.html#cb18-71" aria-hidden="true" tabindex="-1"></a>        title.extract()</span>
+<span id="cb18-72"><a href="data-preprocessing-code.html#cb18-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-73"><a href="data-preprocessing-code.html#cb18-73" aria-hidden="true" tabindex="-1"></a>    motion_text <span class="op">=</span> <span class="st">&quot;&quot;</span>.join(tag.get_text() <span class="cf">for</span> tag <span class="kw">in</span> soup)</span>
+<span id="cb18-74"><a href="data-preprocessing-code.html#cb18-74" aria-hidden="true" tabindex="-1"></a>    motion_text <span class="op">=</span> <span class="st">&quot; &quot;</span>.join(motion_text.split())  <span class="co"># Remove newlines, excessive whitespace</span></span>
+<span id="cb18-75"><a href="data-preprocessing-code.html#cb18-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-76"><a href="data-preprocessing-code.html#cb18-76" aria-hidden="true" tabindex="-1"></a>    party_count <span class="op">=</span> author_party_count(motion)</span>
+<span id="cb18-77"><a href="data-preprocessing-code.html#cb18-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-78"><a href="data-preprocessing-code.html#cb18-78" aria-hidden="true" tabindex="-1"></a>    motion_fields <span class="op">=</span> {</span>
+<span id="cb18-79"><a href="data-preprocessing-code.html#cb18-79" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;hangar_id&quot;</span>: motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;hangar_id&quot;</span>],</span>
+<span id="cb18-80"><a href="data-preprocessing-code.html#cb18-80" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;dok_id&quot;</span>: motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;dok_id&quot;</span>],</span>
+<span id="cb18-81"><a href="data-preprocessing-code.html#cb18-81" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;organ&quot;</span>: motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;organ&quot;</span>],</span>
+<span id="cb18-82"><a href="data-preprocessing-code.html#cb18-82" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;subtyp&quot;</span>: motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;subtyp&quot;</span>],</span>
+<span id="cb18-83"><a href="data-preprocessing-code.html#cb18-83" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;titel&quot;</span>: motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;titel&quot;</span>],</span>
+<span id="cb18-84"><a href="data-preprocessing-code.html#cb18-84" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;subtitel&quot;</span>: motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;subtitel&quot;</span>],</span>
+<span id="cb18-85"><a href="data-preprocessing-code.html#cb18-85" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;dokument_url_html&quot;</span>: motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;dokument_url_html&quot;</span>],</span>
+<span id="cb18-86"><a href="data-preprocessing-code.html#cb18-86" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;datum&quot;</span>: motion[<span class="st">&quot;dokumentstatus&quot;</span>][<span class="st">&quot;dokument&quot;</span>][<span class="st">&quot;datum&quot;</span>],</span>
+<span id="cb18-87"><a href="data-preprocessing-code.html#cb18-87" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;text&quot;</span>: motion_text,</span>
+<span id="cb18-88"><a href="data-preprocessing-code.html#cb18-88" aria-hidden="true" tabindex="-1"></a>        <span class="st">&quot;party_count&quot;</span>: [party_count],</span>
+<span id="cb18-89"><a href="data-preprocessing-code.html#cb18-89" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb18-90"><a href="data-preprocessing-code.html#cb18-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-91"><a href="data-preprocessing-code.html#cb18-91" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> motion_fields</span>
+<span id="cb18-92"><a href="data-preprocessing-code.html#cb18-92" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-93"><a href="data-preprocessing-code.html#cb18-93" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-94"><a href="data-preprocessing-code.html#cb18-94" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_motion_text(filename, folder<span class="op">=</span><span class="st">&quot;data_json&quot;</span>):</span>
+<span id="cb18-95"><a href="data-preprocessing-code.html#cb18-95" aria-hidden="true" tabindex="-1"></a>    motion_json <span class="op">=</span> read_motion_json(filename, folder)</span>
+<span id="cb18-96"><a href="data-preprocessing-code.html#cb18-96" aria-hidden="true" tabindex="-1"></a>    motion_text <span class="op">=</span> parse_html(motion_json)</span>
+<span id="cb18-97"><a href="data-preprocessing-code.html#cb18-97" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> motion_text</span>
+<span id="cb18-98"><a href="data-preprocessing-code.html#cb18-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-99"><a href="data-preprocessing-code.html#cb18-99" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-100"><a href="data-preprocessing-code.html#cb18-100" aria-hidden="true" tabindex="-1"></a>motioner_list <span class="op">=</span> os.listdir(<span class="st">&quot;data_json&quot;</span>)</span>
+<span id="cb18-101"><a href="data-preprocessing-code.html#cb18-101" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-102"><a href="data-preprocessing-code.html#cb18-102" aria-hidden="true" tabindex="-1"></a>pool <span class="op">=</span> mp.Pool()</span>
+<span id="cb18-103"><a href="data-preprocessing-code.html#cb18-103" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> pool.<span class="bu">map</span>(get_motion_text, motioner_list)</span>
+<span id="cb18-104"><a href="data-preprocessing-code.html#cb18-104" aria-hidden="true" tabindex="-1"></a>pool.close()</span>
+<span id="cb18-105"><a href="data-preprocessing-code.html#cb18-105" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-106"><a href="data-preprocessing-code.html#cb18-106" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> [motion <span class="cf">for</span> motion <span class="kw">in</span> res <span class="cf">if</span> motion <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>]</span>
+<span id="cb18-107"><a href="data-preprocessing-code.html#cb18-107" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-108"><a href="data-preprocessing-code.html#cb18-108" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.json_normalize(res)</span>
+<span id="cb18-109"><a href="data-preprocessing-code.html#cb18-109" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&quot;datum&quot;</span>] <span class="op">=</span> pd.to_datetime(df[<span class="st">&quot;datum&quot;</span>])</span>
+<span id="cb18-110"><a href="data-preprocessing-code.html#cb18-110" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&quot;hangar_id&quot;</span>] <span class="op">=</span> pd.to_numeric(df[<span class="st">&quot;hangar_id&quot;</span>])</span>
+<span id="cb18-111"><a href="data-preprocessing-code.html#cb18-111" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-112"><a href="data-preprocessing-code.html#cb18-112" aria-hidden="true" tabindex="-1"></a>df_authors <span class="op">=</span> pd.DataFrame(df[<span class="st">&quot;party_count&quot;</span>].explode().tolist()).add_prefix(<span class="st">&quot;authors_&quot;</span>)</span>
+<span id="cb18-113"><a href="data-preprocessing-code.html#cb18-113" aria-hidden="true" tabindex="-1"></a>df_authors[<span class="st">&quot;nr_authors&quot;</span>] <span class="op">=</span> df_authors.<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb18-114"><a href="data-preprocessing-code.html#cb18-114" aria-hidden="true" tabindex="-1"></a>df_authors <span class="op">=</span> df_authors.rename(columns<span class="op">=</span>{<span class="st">&quot;authors_-&quot;</span>: <span class="st">&quot;authors_independent&quot;</span>})</span>
+<span id="cb18-115"><a href="data-preprocessing-code.html#cb18-115" aria-hidden="true" tabindex="-1"></a>df_authors[<span class="st">&quot;party&quot;</span>] <span class="op">=</span> (df_authors.iloc[:, <span class="dv">0</span>:<span class="dv">9</span>] <span class="op">&gt;=</span> <span class="dv">1</span>).<span class="bu">apply</span>(</span>
+<span id="cb18-116"><a href="data-preprocessing-code.html#cb18-116" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> col: <span class="st">&quot;,&quot;</span>.join(col.index[col].<span class="bu">str</span>.<span class="bu">slice</span>(<span class="dv">8</span>)), axis<span class="op">=</span><span class="dv">1</span></span>
+<span id="cb18-117"><a href="data-preprocessing-code.html#cb18-117" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-118"><a href="data-preprocessing-code.html#cb18-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-119"><a href="data-preprocessing-code.html#cb18-119" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> pd.concat([df.drop(<span class="st">&quot;party_count&quot;</span>, axis<span class="op">=</span><span class="dv">1</span>), df_authors], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb18-120"><a href="data-preprocessing-code.html#cb18-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-121"><a href="data-preprocessing-code.html#cb18-121" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&quot;single_party_authors&quot;</span>] <span class="op">=</span> (</span>
+<span id="cb18-122"><a href="data-preprocessing-code.html#cb18-122" aria-hidden="true" tabindex="-1"></a>    df[</span>
+<span id="cb18-123"><a href="data-preprocessing-code.html#cb18-123" aria-hidden="true" tabindex="-1"></a>        [</span>
+<span id="cb18-124"><a href="data-preprocessing-code.html#cb18-124" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;authors_V&quot;</span>,</span>
+<span id="cb18-125"><a href="data-preprocessing-code.html#cb18-125" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;authors_S&quot;</span>,</span>
+<span id="cb18-126"><a href="data-preprocessing-code.html#cb18-126" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;authors_MP&quot;</span>,</span>
+<span id="cb18-127"><a href="data-preprocessing-code.html#cb18-127" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;authors_C&quot;</span>,</span>
+<span id="cb18-128"><a href="data-preprocessing-code.html#cb18-128" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;authors_L&quot;</span>,</span>
+<span id="cb18-129"><a href="data-preprocessing-code.html#cb18-129" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;authors_KD&quot;</span>,</span>
+<span id="cb18-130"><a href="data-preprocessing-code.html#cb18-130" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;authors_M&quot;</span>,</span>
+<span id="cb18-131"><a href="data-preprocessing-code.html#cb18-131" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;authors_SD&quot;</span>,</span>
+<span id="cb18-132"><a href="data-preprocessing-code.html#cb18-132" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;authors_independent&quot;</span>,</span>
+<span id="cb18-133"><a href="data-preprocessing-code.html#cb18-133" aria-hidden="true" tabindex="-1"></a>        ]</span>
+<span id="cb18-134"><a href="data-preprocessing-code.html#cb18-134" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb18-135"><a href="data-preprocessing-code.html#cb18-135" aria-hidden="true" tabindex="-1"></a>    <span class="op">&gt;=</span> <span class="dv">1</span></span>
+<span id="cb18-136"><a href="data-preprocessing-code.html#cb18-136" aria-hidden="true" tabindex="-1"></a>).<span class="bu">sum</span>(axis<span class="op">=</span><span class="st">&quot;columns&quot;</span>)</span>
+<span id="cb18-137"><a href="data-preprocessing-code.html#cb18-137" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-138"><a href="data-preprocessing-code.html#cb18-138" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&quot;single_party_authors&quot;</span>] <span class="op">=</span> df[<span class="st">&quot;single_party_authors&quot;</span>] <span class="op">&lt;=</span> <span class="dv">1</span></span>
+<span id="cb18-139"><a href="data-preprocessing-code.html#cb18-139" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&quot;text&quot;</span>] <span class="op">=</span> df[<span class="st">&quot;text&quot;</span>].<span class="bu">str</span>.replace(<span class="st">&quot;^\.&quot;</span>, <span class="st">&quot;&quot;</span>)</span>
+<span id="cb18-140"><a href="data-preprocessing-code.html#cb18-140" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&quot;text&quot;</span>] <span class="op">=</span> df[<span class="st">&quot;text&quot;</span>].<span class="bu">str</span>.replace(<span class="st">&quot;^Motivering.&quot;</span>, <span class="st">&quot;&quot;</span>).<span class="bu">str</span>.strip()</span>
+<span id="cb18-141"><a href="data-preprocessing-code.html#cb18-141" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&quot;text&quot;</span>] <span class="op">=</span> df[<span class="st">&quot;text&quot;</span>].<span class="bu">str</span>.replace(<span class="st">&quot;^Bakgrund.&quot;</span>, <span class="st">&quot;&quot;</span>).<span class="bu">str</span>.strip()</span>
+<span id="cb18-142"><a href="data-preprocessing-code.html#cb18-142" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&quot;text&quot;</span>] <span class="op">=</span> df[<span class="st">&quot;text&quot;</span>].<span class="bu">str</span>.replace(<span class="st">&quot;^Inledning&quot;</span>, <span class="st">&quot;&quot;</span>).<span class="bu">str</span>.strip()</span>
+<span id="cb18-143"><a href="data-preprocessing-code.html#cb18-143" aria-hidden="true" tabindex="-1"></a><span class="co"># https://stackoverflow.com/questions/51976328/best-way-to-remove-xad-in-python</span></span>
+<span id="cb18-144"><a href="data-preprocessing-code.html#cb18-144" aria-hidden="true" tabindex="-1"></a>df[<span class="st">&quot;text&quot;</span>] <span class="op">=</span> df[<span class="st">&quot;text&quot;</span>].<span class="bu">str</span>.replace(<span class="st">&quot;</span><span class="ch">\xad</span><span class="st">&quot;</span>, <span class="st">&quot;&quot;</span>)</span>
+<span id="cb18-145"><a href="data-preprocessing-code.html#cb18-145" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-146"><a href="data-preprocessing-code.html#cb18-146" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-147"><a href="data-preprocessing-code.html#cb18-147" aria-hidden="true" tabindex="-1"></a>df.to_feather(<span class="st">&quot;motioner_2018_2021.feather&quot;</span>)</span></code></pre></div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="deploy-model-with-torchserve.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="model-training-code.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/lunr.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+"sharing": {
+"github": true,
+"facebook": true,
+"twitter": true,
+"linkedin": false,
+"weibo": false,
+"instapaper": false,
+"vk": false,
+"whatsapp": false,
+"all": false
+},
+"fontsettings": {
+"theme": "white",
+"family": "serif",
+"size": 2
+},
+"edit": {
+"link": "https://github.com/kb-labb/guides/edit/master/06-appendix.Rmd",
+"text": "Suggest an edit"
+},
+"history": {
+"link": null,
+"text": null
+},
+"view": {
+"link": null,
+"text": null
+},
+"download": ["https://github.com/kb-labb/guides/raw/master/06-appendix.Rmd"],
+"toc": {
+"collapse": "section"
+}
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
