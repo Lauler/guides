@@ -4,13 +4,13 @@ author: "Faton Rekathati, KBLab"
 date: "2022-03-30"
 site: bookdown::bookdown_site
 documentclass: book
-bibliography: [book.bib, references.bib]
+bibliography: [references.bib]
 biblio-style: apalike
 link-citations: yes
 description: "This is a guide describing how to use KBLab's transformer language models for document classification."
 github-repo: lauler/guides
 cover-image: ../images/kb_logo_text_black.png
-url: 'https\://github.com/lauler/guides/sentiment_analysis/'
+url: 'https\://github.com/lauler/guides/'
 ---
 
 
